@@ -1,20 +1,75 @@
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
 export async function initScene1() {
-  // Reset all captions
-  document.querySelectorAll('.narrative-caption').forEach(caption => {
-    caption.style.opacity = '0';
-    caption.style.transform = 'translateY(20px)';
+  // Clear existing captions
+  d3.selectAll('.caption-left, .caption-right').html('');
+  
+  // Define the captions data
+  const leftCaptions = [
+    {
+      id: "caption-1",
+      title: "Rising Global Temperatures",
+      text: "Since 1900, Earth has experienced a significant increase in average temperatures, with the trend becoming more pronounced after 1980."
+    },
+    {
+      id: "caption-2",
+      title: "Land vs Ocean",
+      text: "Land temperatures show greater variability and faster warming compared to combined land-ocean measurements, highlighting the ocean's moderating effect on climate."
+    }
+  ];
+  
+  const rightCaptions = [
+    {
+      id: "caption-3",
+      title: "Recent Acceleration",
+      text: "The rate of warming has accelerated in recent decades, with the period since 2000 showing some of the most dramatic increases in recorded history."
+    },
+    {
+      id: "caption-4",
+      title: "Critical Thresholds",
+      text: "The observed temperature increases are approaching critical thresholds that scientists warn could trigger irreversible changes in Earth's climate systems."
+    }
+  ];
+  
+  // Add left captions
+  const leftContainer = d3.select(".caption-left");
+  leftCaptions.forEach(caption => {
+    leftContainer.append("div")
+      .attr("class", "narrative-caption")
+      .attr("id", caption.id)
+      .style("opacity", "0")
+      .style("transform", "translateY(20px)")
+      .html(`
+        <h3>${caption.title}</h3>
+        <p>${caption.text}</p>
+      `);
+  });
+  
+  // Add right captions
+  const rightContainer = d3.select(".caption-right");
+  rightCaptions.forEach(caption => {
+    rightContainer.append("div")
+      .attr("class", "narrative-caption")
+      .attr("id", caption.id)
+      .style("opacity", "0")
+      .style("transform", "translateY(20px)")
+      .html(`
+        <h3>${caption.title}</h3>
+        <p>${caption.text}</p>
+      `);
   });
 
   // Animate captions sequentially
   const animateCaptions = () => {
-    const captions = document.querySelectorAll('.narrative-caption');
-    captions.forEach((caption, index) => {
+    const captions = d3.selectAll('.narrative-caption');
+    captions.each((d, i, nodes) => {
       setTimeout(() => {
-        caption.style.opacity = '1';
-        caption.style.transform = 'translateY(0)';
-      }, index * 300); // 300ms delay between each caption
+        d3.select(nodes[i])
+          .transition()
+          .duration(300)
+          .style("opacity", "1")
+          .style("transform", "translateY(0)");
+      }, i * 300); // 300ms delay between each caption
     });
   };
 
