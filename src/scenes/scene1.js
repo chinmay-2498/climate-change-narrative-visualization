@@ -204,7 +204,7 @@ export async function initScene1() {
     .attr("x", width / 2)
     .attr("y", 52)
     .attr("class", "subtitle")
-    .text("Land vs Land + Ocean Temperatures (°C)");
+    .text("[Land] vs [Land + Ocean] Temperatures (°C)");
     
   // Add legend below the chart
   svg.style("margin-bottom", "10px"); // Add space between chart and legend
