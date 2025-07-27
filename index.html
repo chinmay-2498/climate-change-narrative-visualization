@@ -4,55 +4,17 @@
   <meta charset="utf-8" />
   <title>Global Climate Change Trends</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f7f7f7;
-      color: #333;
-    }
-    #app {
-      width: 100%;
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 2rem 1rem;
-    }
-    h1 {
-      font-size: 2rem;
-      margin-bottom: 1rem;
-    }
-    #controls {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-    }
-    button.trigger {
-      background: #007acc;
-      color: #fff;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      transition: background 0.2s ease;
-    }
-    button.trigger:hover {
-      background: #005fa3;
-    }
-    .scene {
-      margin-top: 1rem;
-    }
-    .hidden {
-      display: none;
-    }
-  </style>
+  <link rel="stylesheet" href="public/assets/styles/main.css" />
 </head>
 <body>
-  <div id="app">
-    <h1>Global Climate Change Trends</h1>
-    <div id="viz"></div>
-    <script type="module" src="src/main.js"></script>
+  <main class="container">
+    <h1 class="page-title">Global Climate Change Trends</h1>
+    <div id="navigation"></div>
+    <div class="scene-section">
+      <div id="viz"></div>
+    </div>
+  </main>
+
+  <script type="module" src="src/main.js"></script>
 </body>
 </html>
