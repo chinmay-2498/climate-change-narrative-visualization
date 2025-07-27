@@ -1,63 +1,63 @@
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
 export async function initScene1() {
-  // Clear existing captions
-  d3.selectAll('.caption-left, .caption-right').html('');
-  
-  // Define the captions data
-  const leftCaptions = [
-    {
-      id: "caption-1",
-      title: "Rising Global Temperatures",
-      text: "Since 1900, Earth has experienced a significant increase in average temperatures, with the trend becoming more pronounced after 1980."
-    },
-    {
-      id: "caption-2",
-      title: "Land vs Ocean",
-      text: "Land temperatures show greater variability and faster warming compared to combined land-ocean measurements, highlighting the ocean's moderating effect on climate."
-    }
-  ];
-  
-  const rightCaptions = [
-    {
-      id: "caption-3",
-      title: "Recent Acceleration",
-      text: "The rate of warming has accelerated in recent decades, with the period since 2000 showing some of the most dramatic increases in recorded history."
-    },
-    {
-      id: "caption-4",
-      title: "Critical Thresholds",
-      text: "The observed temperature increases are approaching critical thresholds that scientists warn could trigger irreversible changes in Earth's climate systems."
-    }
-  ];
-  
-  // Add left captions
-  const leftContainer = d3.select(".caption-left");
-  leftCaptions.forEach(caption => {
-    leftContainer.append("div")
-      .attr("class", "narrative-caption")
-      .attr("id", caption.id)
-      .style("opacity", "0")
-      .style("transform", "translateY(20px)")
-      .html(`
-        <h3>${caption.title}</h3>
-        <p>${caption.text}</p>
-      `);
-  });
-  
-  // Add right captions
-  const rightContainer = d3.select(".caption-right");
-  rightCaptions.forEach(caption => {
-    rightContainer.append("div")
-      .attr("class", "narrative-caption")
-      .attr("id", caption.id)
-      .style("opacity", "0")
-      .style("transform", "translateY(20px)")
-      .html(`
-        <h3>${caption.title}</h3>
-        <p>${caption.text}</p>
-      `);
-  });
+  // Function to add captions
+  function addCaptions() {
+    // Define the captions data
+    const leftCaptions = [
+      {
+        id: "caption-1",
+        title: "Why it matters?",
+        text: "A 2°C rise may not seem much, but it's enough to intensify wildfires, flood coastal cities, and threaten global food security."
+      },
+      {
+        id: "caption-2",
+        title: "Land vs Ocean",
+        text: "Land temperatures show greater variability and faster warming compared to combined land-ocean measurements, highlighting the ocean's moderating effect on climate."
+      }
+    ];
+    
+    const rightCaptions = [
+      {
+        id: "caption-3",
+        title: "Recent Acceleration",
+        text: "The rate of warming has accelerated in recent decades, with the period since 2000 showing some of the most dramatic increases in recorded history."
+      },
+      {
+        id: "caption-4",
+        title: "Critical Thresholds",
+        text: "The observed temperature increases are approaching critical thresholds that scientists warn could trigger irreversible changes in Earth's climate systems."
+      }
+    ];
+    
+    // Add left captions
+    const leftContainer = d3.select(".caption-left");
+    leftCaptions.forEach(caption => {
+      leftContainer.append("div")
+        .attr("class", "narrative-caption")
+        .attr("id", caption.id)
+        .style("opacity", "0")
+        .style("transform", "translateY(20px)")
+        .html(`
+          <h3>${caption.title}</h3>
+          <p>${caption.text}</p>
+        `);
+    });
+    
+    // Add right captions
+    const rightContainer = d3.select(".caption-right");
+    rightCaptions.forEach(caption => {
+      rightContainer.append("div")
+        .attr("class", "narrative-caption")
+        .attr("id", caption.id)
+        .style("opacity", "0")
+        .style("transform", "translateY(20px)")
+        .html(`
+          <h3>${caption.title}</h3>
+          <p>${caption.text}</p>
+        `);
+    });
+  };
 
   // Animate captions sequentially
   const animateCaptions = () => {
@@ -73,12 +73,66 @@ export async function initScene1() {
     });
   };
 
-  const container = document.getElementById("viz");
-  const width = Math.min(800, container.offsetWidth - 40); // reduced from 900
-  const height = Math.min(500, window.innerHeight * 0.75);
-  
-  // Start caption animation after a short delay
-  setTimeout(animateCaptions, 500);
+  // Function to animate the entire scene
+  const animateScene = async () => {
+    // Clear existing content and reset state
+    d3.selectAll('.caption-left, .caption-right').html('');
+    d3.select("#viz").html('');
+    
+    // Hide replay button initially
+    const replayButton = d3.select("#replay-button")
+      .style("opacity", "0")
+      .style("transform", "scale(0)");
+
+    // Add captions with initial hidden state
+    addCaptions();
+    
+    // Create chart with initial hidden state
+    await createChart();
+    
+    // Start animation sequence
+    await new Promise(resolve => setTimeout(resolve, 500)); // Initial delay
+    
+    // Animate chart
+    d3.select("#viz svg.chart-card")
+      .transition()
+      .duration(800)
+      .style("opacity", "1")
+      .style("transform", "translateY(0)");
+    
+    // Animate legend
+    await new Promise(resolve => setTimeout(resolve, 800));
+    d3.select("#viz .legend")
+      .transition()
+      .duration(500)
+      .style("opacity", "1")
+      .style("transform", "translateY(0)");
+    
+    // Animate captions
+    await new Promise(resolve => setTimeout(resolve, 500));
+    animateCaptions();
+    
+    // Show replay button
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    replayButton
+      .style("display", "flex")
+      .transition()
+      .duration(300)
+      .style("opacity", "1")
+      .style("transform", "scale(1)");
+  };
+
+  // Add replay button click handler (only once)
+  d3.select("#replay-button").on("click", animateScene);
+
+  // Start the animation sequence
+  animateScene();
+
+  // Function to create the chart
+  async function createChart() {
+    const container = document.getElementById("viz");
+    const width = Math.min(800, container.offsetWidth - 40);
+    const height = Math.min(500, window.innerHeight * 0.75);
   const margin = { top: 80, right: 70, bottom: 60, left: 70 }; // reduced right margin from 130 to 70
 
   const svg = d3.select("#viz")
@@ -87,7 +141,9 @@ export async function initScene1() {
     .attr("width", width)
     .attr("height", height)
     .style("overflow", "visible")
-    .attr("class", "chart-card");
+    .attr("class", "chart-card")
+    .style("opacity", "0")
+    .style("transform", "translateY(20px)");
 
   const data = await d3.csv("public/assets/data/global_annual_temp.csv", d3.autoType);
 
@@ -113,13 +169,30 @@ export async function initScene1() {
     .y(d => y(d.LandOceanAvgTemp))
     .curve(d3.curveMonotoneX);
 
+  // Add X axis and label
   svg.append("g")
     .attr("transform", `translate(0,${height - margin.bottom})`)
     .call(d3.axisBottom(x).tickFormat(d3.format("d")));
+  
+  svg.append("text")
+    .attr("class", "axis-label")
+    .attr("x", width / 2)
+    .attr("y", height - 10)
+    .style("text-anchor", "middle")
+    .text("Year");
 
+  // Add Y axis and label
   svg.append("g")
     .attr("transform", `translate(${margin.left},0)`)
     .call(d3.axisLeft(y));
+    
+  svg.append("text")
+    .attr("class", "axis-label")
+    .attr("transform", "rotate(-90)")
+    .attr("y", margin.left - 40)
+    .attr("x", -(height / 2))
+    .style("text-anchor", "middle")
+    .text("Temperature (°C)");
 
   svg.append("text")
     .attr("x", width / 2)
@@ -144,7 +217,9 @@ export async function initScene1() {
     .attr("class", "legend")
     .style("display", "flex")
     .style("justify-content", "center")
-    .style("width", "100%");
+    .style("width", "100%")
+    .style("opacity", "0")
+    .style("transform", "translateY(20px)");
   
   // Legend for land temperature
   const landLegend = legendContainer.append("div")
@@ -195,19 +270,45 @@ export async function initScene1() {
       .style("opacity", 0.7);
   };
 
-  svg.append("path")
+  // Create paths with initial state
+  const landPath = svg.append("path")
     .datum(data)
     .attr("fill", "none")
     .attr("stroke", "#e63946")
     .attr("stroke-width", 2)
-    .attr("d", lineLand);
+    .attr("d", lineLand)
+    .style("opacity", 0)
+    .attr("stroke-dasharray", function() {
+      return this.getTotalLength();
+    })
+    .attr("stroke-dashoffset", function() {
+      return this.getTotalLength();
+    });
 
-  svg.append("path")
+  const oceanPath = svg.append("path")
     .datum(data)
     .attr("fill", "none")
     .attr("stroke", "#457b9d")
     .attr("stroke-width", 2)
-    .attr("d", lineOcean);
+    .attr("d", lineOcean)
+    .style("opacity", 0)
+    .attr("stroke-dasharray", function() {
+      return this.getTotalLength();
+    })
+    .attr("stroke-dashoffset", function() {
+      return this.getTotalLength();
+    });
+
+  // Animate the paths
+  landPath.transition()
+    .duration(3500)
+    .style("opacity", 1)
+    .attr("stroke-dashoffset", 0);
+
+  oceanPath.transition()
+    .duration(3500)
+    .style("opacity", 1)
+    .attr("stroke-dashoffset", 0);
 
   const highlights = [
     { 
@@ -338,16 +439,8 @@ export async function initScene1() {
       .on("mouseout", handleMouseOut);
   });
 
-  // Raise highlights above voronoi layer
-  highlightsGroup.raise();
-
-  // Inject Scene 1 caption
-  d3.select(".narrative-caption")
-    .html(
-      `<strong>Why it matters:</strong> A 2°C rise may not seem much, 
-      but it's enough to intensify wildfires, flood coastal cities, 
-      and threaten global food security.`
-    )
-    .style("opacity", 1)
-    .style("display", "block");
+    // Raise highlights above voronoi layer
+    highlightsGroup.raise();
+  }  // Start the animation sequence
+  animateScene();
 }

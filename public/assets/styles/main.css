@@ -15,6 +15,48 @@ body {
   font-weight: 600;
 }
 
+.replay-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #457b9d;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.replay-button:hover {
+  transform: scale(1.1);
+  background: #1d3557;
+}
+
+.replay-button svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Animation classes */
+.chart-card {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.8s ease;
+}
+
+.legend {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.5s ease;
+}
+
 .scene-section {
   display: grid;
   grid-template-columns: minmax(250px, 1fr) minmax(auto, 800px) minmax(250px, 1fr);
