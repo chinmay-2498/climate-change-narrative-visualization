@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Global Climate Change Trends</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f7f7f7;
+      color: #333;
+    }
+    #app {
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    #controls {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    button.trigger {
+      background: #007acc;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.2s ease;
+    }
+    button.trigger:hover {
+      background: #005fa3;
+    }
+    .scene {
+      margin-top: 1rem;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h1>Global Climate Change Trends</h1>
+    <!-- Scene trigger controls -->
+    <div id="controls">
+      <!-- Buttons trigger scene transitions via data attributes -->
+      <button class="trigger" data-scene="scene1">Global Trend</button>
+      <button class="trigger" data-scene="scene2">Temperature vs CO₂</button>
+      <button class="trigger" data-scene="scene3">Regional Trends</button>
+    </div>
+    <!-- Scenes will be appended here by the JavaScript modules -->
+    <div id="scene-container"></div>
+  </div>
+  <!-- Load external libraries from CDNs.  Note that d3-annotation augments the global d3 object. -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-annotation/2.5.1/d3-annotation.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+  <!-- Import our main module which bootstraps the visualization -->
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
