@@ -1,4 +1,25 @@
-import * as d3 from 'd3';
+import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+
+// chart.js
+export function drawLineChart(svg, data, x, y, xField, yField, strokeColor, label) {
+  const line = d3.line()
+    .x(d => x(d[xField]))
+    .y(d => y(d[yField]));
+
+  svg.append("path")
+    .datum(data)
+    .attr("fill", "none")
+    .attr("stroke", strokeColor)
+    .attr("stroke-width", 2)
+    .attr("d", line);
+
+  svg.append("text")
+    .attr("x", x(data[data.length - 1][xField]) + 5)
+    .attr("y", y(data[data.length - 1][yField]))
+    .text(label)
+    .attr("fill", strokeColor)
+    .attr("font-size", "12px");
+}
 
 export function lineChart(container, data, options = {}) {
   const width = options.width || 600;

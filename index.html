@@ -52,21 +52,7 @@
 <body>
   <div id="app">
     <h1>Global Climate Change Trends</h1>
-    <!-- Scene trigger controls -->
-    <div id="controls">
-      <!-- Buttons trigger scene transitions via data attributes -->
-      <button class="trigger" data-scene="scene1">Global Trend</button>
-      <button class="trigger" data-scene="scene2">Temperature vs CO₂</button>
-      <button class="trigger" data-scene="scene3">Regional Trends</button>
-    </div>
-    <!-- Scenes will be appended here by the JavaScript modules -->
-    <div id="scene-container"></div>
-  </div>
-  <!-- Load external libraries from CDNs.  Note that d3-annotation augments the global d3 object. -->
-  <script src="https://d3js.org/d3.v7.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-annotation/2.5.1/d3-annotation.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
-  <!-- Import our main module which bootstraps the visualization -->
-  <script type="module" src="src/main.js"></script>
+    <div id="viz"></div>
+    <script type="module" src="src/main.js"></script>
 </body>
 </html>
