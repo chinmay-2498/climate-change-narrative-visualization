@@ -1,30 +1,37 @@
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
-const COLORS = {
-  land: "#e63946",
-  ocean: "#457b9d",
-  annotation: "#fca311",
-  text: "#1d3557",
-  background: "#f1faee"
-};
-
 export async function initScene1() {
-  const container = document.getElementById("viz");
-  const width = Math.min(1200, container.offsetWidth - 20);
-  const height = Math.min(600, window.innerHeight * 0.65);
-  const margin = { top: 50, right: 160, bottom: 50, left: 80 };
-  
-  // Clear previous content
-  container.innerHTML = "";
-  
-  // Create wrapper for better layout
-  const wrapper = d3.select("#viz")
-    .append("div")
-    .attr("class", "viz-wrapper");
+  // Reset all captions
+  document.querySelectorAll('.narrative-caption').forEach(caption => {
+    caption.style.opacity = '0';
+    caption.style.transform = 'translateY(20px)';
+  });
 
-  const svg = d3.select(".viz-wrapper")
+  // Animate captions sequentially
+  const animateCaptions = () => {
+    const captions = document.querySelectorAll('.narrative-caption');
+    captions.forEach((caption, index) => {
+      setTimeout(() => {
+        caption.style.opacity = '1';
+        caption.style.transform = 'translateY(0)';
+      }, index * 300); // 300ms delay between each caption
+    });
+  };
+
+  const container = document.getElementById("viz");
+  const width = Math.min(800, container.offsetWidth - 40); // reduced from 900
+  const height = Math.min(500, window.innerHeight * 0.75);
+  
+  // Start caption animation after a short delay
+  setTimeout(animateCaptions, 500);
+  const margin = { top: 80, right: 70, bottom: 60, left: 70 }; // reduced right margin from 130 to 70
+
+  const svg = d3.select("#viz")
+    .html("")
     .append("svg")
-    .attr("viewBox", [0, 0, width, height])
+    .attr("width", width)
+    .attr("height", height)
+    .style("overflow", "visible")
     .attr("class", "chart-card");
 
   const data = await d3.csv("public/assets/data/global_annual_temp.csv", d3.autoType);
@@ -51,47 +58,13 @@ export async function initScene1() {
     .y(d => y(d.LandOceanAvgTemp))
     .curve(d3.curveMonotoneX);
 
-  // Add axes with labels
-  const xAxis = svg.append("g")
+  svg.append("g")
     .attr("transform", `translate(0,${height - margin.bottom})`)
-    .style("opacity", 0)
     .call(d3.axisBottom(x).tickFormat(d3.format("d")));
 
-  const yAxis = svg.append("g")
+  svg.append("g")
     .attr("transform", `translate(${margin.left},0)`)
-    .style("opacity", 0)
     .call(d3.axisLeft(y));
-
-  // Add axis labels
-  svg.append("text")
-    .attr("class", "axis-label")
-    .attr("x", width / 2)
-    .attr("y", height - 20)
-    .style("opacity", 0)
-    .text("Year");
-
-  svg.append("text")
-    .attr("class", "axis-label")
-    .attr("transform", "rotate(-90)")
-    .attr("x", -height / 2)
-    .attr("y", 25)
-    .style("opacity", 0)
-    .text("Temperature (°C)");
-
-  // Animate axes entrance
-  xAxis.transition()
-    .duration(1000)
-    .style("opacity", 1);
-
-  yAxis.transition()
-    .duration(1000)
-    .style("opacity", 1);
-
-  svg.selectAll(".axis-label")
-    .transition()
-    .delay(500)
-    .duration(1000)
-    .style("opacity", 1);
 
   svg.append("text")
     .attr("x", width / 2)
@@ -104,317 +77,222 @@ export async function initScene1() {
     .attr("y", 52)
     .attr("class", "subtitle")
     .text("Land vs Land + Ocean Temperatures (°C)");
+    
+  // Add legend below the chart
+  svg.style("margin-bottom", "10px"); // Add space between chart and legend
+  
+  // Remove any existing legend first
+  d3.select("#viz .legend").remove();
+  
+  const legendContainer = d3.select("#viz")
+    .append("div")
+    .attr("class", "legend")
+    .style("display", "flex")
+    .style("justify-content", "center")
+    .style("width", "100%");
+  
+  // Legend for land temperature
+  const landLegend = legendContainer.append("div")
+    .attr("class", "legend-item");
+  landLegend.append("div")
+    .attr("class", "legend-line")
+    .style("background", "#e63946");
+  landLegend.append("span")
+    .text("Land Temperature");
+    
+  // Legend for ocean temperature
+  const oceanLegend = legendContainer.append("div")
+    .attr("class", "legend-item");
+  oceanLegend.append("div")
+    .attr("class", "legend-line")
+    .style("background", "#457b9d");
+  oceanLegend.append("span")
+    .text("Land + Ocean Temperature");
+    
+  // Legend for highlight events
+  const highlightLegend = legendContainer.append("div")
+    .attr("class", "legend-item");
+  highlightLegend.append("div")
+    .attr("class", "legend-dot glow-dot")
+    .style("background", "#e63946");
+  highlightLegend.append("span")
+    .text("Significant Events");
 
   const tooltip = d3.select("#viz")
     .append("div")
     .attr("class", "tooltip");
 
+  // Create vertical guide line
   const verticalLine = svg.append("line")
     .attr("class", "vertical-line")
     .attr("y1", margin.top)
     .attr("y2", height - margin.bottom)
-    .style("opacity", 0);
-
-  // Enhanced tooltip interaction
-  const bisect = d3.bisector(d => d.Year).left;
-  
-  svg.append("rect")
-    .attr("class", "overlay")
-    .attr("x", margin.left)
-    .attr("y", margin.top)
-    .attr("width", width - margin.left - margin.right)
-    .attr("height", height - margin.top - margin.bottom)
-    .style("fill", "none")
-    .style("pointer-events", "all")
-    .on("mouseover", () => {
-      verticalLine.style("opacity", 1);
-      tooltip.style("opacity", 1);
-    })
-    .on("mouseout", () => {
-      verticalLine.style("opacity", 0);
-      tooltip.style("opacity", 0);
-    })
-    .on("mousemove", (event) => {
-      const mouseX = d3.pointer(event)[0];
-      const x0 = x.invert(mouseX);
-      const i = bisect(data, x0, 1);
-      const d0 = data[i - 1];
-      const d1 = data[i];
-      const d = x0 - d0.Year > d1.Year - x0 ? d1 : d0;
-
-      verticalLine
-        .attr("x1", x(d.Year))
-        .attr("x2", x(d.Year));
-
-      tooltip
-        .style("left", `${event.pageX + 15}px`)
-        .style("top", `${event.pageY - 28}px`)
-        .html(`
-          <strong>Year: ${d.Year}</strong><br>
-          <span style="color: ${COLORS.land}">Land Temp: ${d.LandAvgTemp.toFixed(2)}°C</span><br>
-          <span style="color: ${COLORS.ocean}">Land + Ocean: ${d.LandOceanAvgTemp.toFixed(2)}°C</span>
-        `);
-    });
-
-  // Add legend
-  const legend = svg.append("g")
-    .attr("class", "legend")
-    .attr("transform", `translate(${width - margin.right + 20}, ${margin.top + 20})`)
-    .style("opacity", 0);
-
-  // Legend items
-  const legendItems = [
-    { color: COLORS.land, label: "Land Temperature" },
-    { color: COLORS.ocean, label: "Land + Ocean Temperature" }
-  ];
-
-  legendItems.forEach((item, i) => {
-    const lg = legend.append("g")
-      .attr("transform", `translate(0, ${i * 25})`);
-
-    lg.append("line")
-      .attr("x1", 0)
-      .attr("x2", 20)
-      .attr("stroke", item.color)
-      .attr("stroke-width", 2);
-
-    lg.append("text")
-      .attr("x", 30)
-      .attr("y", 4)
-      .text(item.label)
-      .style("font-size", "12px");
-  });
-
-  // Animate legend entrance
-  legend.transition()
-    .delay(1500)
-    .duration(1000)
-    .style("opacity", 1);
-
-  // Add replay button
-  const replayButton = d3.select("#viz")
-    .append("button")
-    .attr("class", "replay-button")
-    .html('<svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>')
-    .style("opacity", 0);
-
-  // Function to handle replay animation
-  function replayAnimation() {
-    // Reset paths
-    svg.selectAll("path").remove();
+    .style("opacity", 0)
+    .style("stroke", "#666")
+    .style("stroke-width", "1px")
+    .style("stroke-dasharray", "4,4");
     
-    // Redraw lines with animation
-    const landPath = svg.append("path")
-      .datum(data)
-      .attr("fill", "none")
-      .attr("stroke", COLORS.land)
-      .attr("stroke-width", 2)
-      .attr("d", lineLand)
-      .attr("stroke-dasharray", function() {
-        const len = this.getTotalLength();
-        return len + " " + len;
-      })
-      .attr("stroke-dashoffset", function() {
-        return this.getTotalLength();
-      });
+  // Function to update vertical line
+  const updateVerticalLine = (year) => {
+    verticalLine
+      .attr("x1", x(year))
+      .attr("x2", x(year))
+      .style("opacity", 0.7);
+  };
 
-    const oceanPath = svg.append("path")
-      .datum(data)
-      .attr("fill", "none")
-      .attr("stroke", COLORS.ocean)
-      .attr("stroke-width", 2)
-      .attr("d", lineOcean)
-      .attr("stroke-dasharray", function() {
-        const len = this.getTotalLength();
-        return len + " " + len;
-      })
-      .attr("stroke-dashoffset", function() {
-        return this.getTotalLength();
-      });
-
-    // Animate paths
-    landPath.transition()
-      .duration(1500)
-      .attr("stroke-dashoffset", 0);
-
-    oceanPath.transition()
-      .duration(1500)
-      .delay(200)
-      .attr("stroke-dashoffset", 0);
-
-    // Reset and animate annotations
-    annotationGroup.selectAll("*").remove();
-    addAnnotations();
-  }
-
-  replayButton.on("click", replayAnimation);
-
-  // Show replay button after initial animation
-  setTimeout(() => {
-    replayButton.transition()
-      .duration(500)
-      .style("opacity", 1);
-  }, 2000);
-
-  // Add annotation dots with enhanced interactivity
-  const annotations = [
-    { 
-      year: 1998, 
-      temp: data.find(d => d.Year === 1998).LandAvgTemp, 
-      text: "Strong El Niño",
-      description: "One of the strongest El Niño events recorded, causing global temperature spike"
-    },
-    { 
-      year: 2015, 
-      temp: data.find(d => d.Year === 2015).LandAvgTemp, 
-      text: "Paris Agreement & Record Heat",
-      description: "Global climate accord signed as temperatures reach record highs"
-    }
-  ];
-
-  const annotationGroup = svg.append("g")
-    .attr("class", "annotations");
-
-  function addAnnotations() {
-    annotations.forEach(ann => {
-      const dot = annotationGroup.append("g")
-        .attr("transform", `translate(${x(ann.year)},${y(ann.temp)})`);
-
-      // Add pulse animation circle
-      dot.append("circle")
-        .attr("class", "pulse-circle")
-        .attr("r", 6)
-        .attr("fill", "none")
-        .attr("stroke", COLORS.annotation)
-        .style("stroke-opacity", 1);
-
-      // Add main dot
-      dot.append("circle")
-        .attr("class", "glow-dot")
-        .attr("r", 6)
-        .attr("fill", COLORS.annotation)
-        .style("cursor", "pointer")
-        .on("mouseover", (event) => {
-          // Show annotation text
-          annotationLabel
-            .style("opacity", 1)
-            .html(`
-              <div class="annotation-title">${ann.text}</div>
-              <div class="annotation-year">${ann.year}</div>
-              <div class="annotation-temp">Temperature: ${ann.temp.toFixed(2)}°C</div>
-              <div class="annotation-desc">${ann.description}</div>
-            `)
-            .style("left", `${event.pageX + 10}px`)
-            .style("top", `${event.pageY - 10}px`);
-
-          // Highlight the dot
-          d3.select(event.currentTarget)
-            .transition()
-            .duration(200)
-            .attr("r", 8);
-        })
-        .on("mouseout", (event) => {
-          // Hide annotation text
-          annotationLabel.style("opacity", 0);
-          
-          // Reset dot size
-          d3.select(event.currentTarget)
-            .transition()
-            .duration(200)
-            .attr("r", 6);
-        });
-
-      // Add text label
-      // Remove the static text label as we'll show it in the tooltip instead
-    });
-  }
-
-  // Add annotation label container
-  const annotationLabel = d3.select("#viz")
-    .append("div")
-    .attr("class", "annotation-label")
-    .style("opacity", 0);
-
-  // Initial addition of annotations
-  addAnnotations();
-
-  // Draw animated lines
   svg.append("path")
     .datum(data)
     .attr("fill", "none")
-    .attr("stroke", COLORS.land)
+    .attr("stroke", "#e63946")
     .attr("stroke-width", 2)
-    .attr("d", lineLand)
-    .attr("stroke-dasharray", function () {
-      const len = this.getTotalLength();
-      return len + " " + len;
-    })
-    .attr("stroke-dashoffset", function () {
-      return this.getTotalLength();
-    })
-    .transition()
-    .duration(1500)
-    .attr("stroke-dashoffset", 0);
+    .attr("d", lineLand);
 
   svg.append("path")
     .datum(data)
     .attr("fill", "none")
     .attr("stroke", "#457b9d")
     .attr("stroke-width", 2)
-    .attr("d", lineOcean)
-    .attr("stroke-dasharray", function () {
-      const len = this.getTotalLength();
-      return len + " " + len;
-    })
-    .attr("stroke-dashoffset", function () {
-      return this.getTotalLength();
-    })
-    .transition()
-    .duration(1500)
-    .delay(200)
-    .attr("stroke-dashoffset", 0);
+    .attr("d", lineOcean);
 
-  // Remove duplicate annotations section as we already have enhanced annotations
+  const highlights = [
+    { 
+      year: 1998, 
+      label: "Strong El Niño Event",
+      description: "One of the strongest El Niño events recorded, causing global temperature spike and widespread climate disruption",
+      color: "#e63946" 
+    },
+    { 
+      year: 2015, 
+      label: "Paris Agreement",
+      description: "196 countries agreed to limit global temperature rise to well below 2°C above pre-industrial levels",
+      color: "#e63946" 
+    }
+  ];
 
-  // Voronoi interaction
-  const voronoi = d3.Delaunay.from(data, d => x(d.Year), d => y(d.LandAvgTemp)).voronoi([0, 0, width, height]);
+  // Create the base layers in correct order: voronoi at bottom, highlights at top
+  const voronoiGroup = svg.append("g")
+    .attr("class", "voronoi-layer")
+    .style("pointer-events", "all");
 
-  svg.append("g")
-    .selectAll("path")
+  const highlightsGroup = svg.append("g")
+    .attr("class", "highlights-group")
+    .style("pointer-events", "all");
+
+  // Set up voronoi
+  const voronoi = d3.Delaunay
+    .from(data, d => x(d.Year), d => y(d.LandAvgTemp))
+    .voronoi([margin.left, margin.top, width - margin.right, height - margin.bottom]);
+
+  // Add voronoi interaction layer
+  voronoiGroup.selectAll("path")
     .data(data)
     .join("path")
     .attr("d", (_, i) => voronoi.renderCell(i))
     .attr("fill", "transparent")
     .on("mouseover", (event, d) => {
-      tooltip.style("opacity", 1)
-        .html(`Year: ${d.Year}<br>Land: ${d.LandAvgTemp.toFixed(2)}°C<br>Ocean: ${d.LandOceanAvgTemp.toFixed(2)}°C`)
-        .style("left", event.pageX + 10 + "px")
-        .style("top", event.pageY - 30 + "px");
-      verticalLine
-        .attr("x1", x(d.Year))
-        .attr("x2", x(d.Year))
-        .style("opacity", 0.7);
+      const mouseX = event.pageX;
+      const mouseY = event.pageY;
+      const tooltipOffset = { x: 15, y: 20 };
+
+      tooltip
+        .attr("class", "tooltip")
+        .html(`
+          <strong>${d.Year}</strong>
+          Land: ${d.LandAvgTemp.toFixed(2)}°C<br>
+          Ocean: ${d.LandOceanAvgTemp.toFixed(2)}°C
+        `)
+        .style("left", `${mouseX + tooltipOffset.x}px`)
+        .style("top", `${mouseY - tooltipOffset.y}px`)
+        .style("opacity", 1)
+        .style("visibility", "visible");
+
+      updateVerticalLine(d.Year);
     })
     .on("mouseout", () => {
-      tooltip.style("opacity", 0);
+      tooltip.style("opacity", 0).style("visibility", "hidden");
       verticalLine.style("opacity", 0);
     });
 
-  // Add the single caption below the graph
-  const caption = d3.select(".viz-wrapper")
-    .append("div")
-    .attr("class", "caption")
-    .style("opacity", 0)
-    .html(`
-      <p class="caption-text">
-        <strong>Why it matters:</strong> A 2°C rise may not seem much, but it's enough to intensify wildfires, 
-        flood coastal cities, and threaten global food security.
-      </p>
-    `);
+  highlights.forEach(({ year, label, description, color }) => {
+    console.log(`Processing highlight for year ${year}`);
+    const pt = data.find(d => d.Year === year);
+    if (!pt) {
+      console.error(`No data found for year ${year}`);
+      return;
+    }
+    console.log('Found data point:', pt);
 
-  // Animate caption entrance
-  caption.transition()
-    .delay(2000)
-    .duration(1000)
-    .style("opacity", 1);
+    // Create highlight dot group
+    const dotGroup = highlightsGroup.append("g")
+      .attr("class", "highlight-group")
+
+    // Create event handlers
+    const handleMouseOver = (event) => {
+      event.stopPropagation(); // Prevent event bubbling
+      console.log(`Mouseover triggered for year ${year}`);
+      
+      // Calculate tooltip position
+      const mouseX = event.pageX;
+      const mouseY = event.pageY;
+      const tooltipOffset = { x: 15, y: 20 }; // Offset from cursor
+      
+      tooltip
+        .attr("class", "tooltip highlight-tooltip")
+        .html(`
+          <strong>${label} (${year})</strong>
+          ${description}<br><br>
+          Temperature: ${pt.LandAvgTemp.toFixed(2)}°C
+        `)
+        .style("left", `${mouseX + tooltipOffset.x}px`)
+        .style("top", `${mouseY - tooltipOffset.y}px`)
+        .style("opacity", 1)
+        .style("visibility", "visible");
+      
+      console.log('Tooltip HTML set to:', tooltip.html());
+      console.log('Tooltip position:', { left: mouse.x, top: mouse.y });
+      
+      updateVerticalLine(pt.Year);
+    };
+
+    const handleMouseOut = () => {
+      tooltip.style("opacity", 0).style("visibility", "hidden");
+      verticalLine.style("opacity", 0);
+    };
+
+    // Add the visible glowing dot with interactive capabilities
+    const dot = dotGroup.append("circle")
+      .attr("cx", x(pt.Year))
+      .attr("cy", y(pt.LandAvgTemp))
+      .attr("r", 6)
+      .attr("fill", color)
+      .attr("class", "glow-dot")
+      .style("pointer-events", "all");
+
+    // Add event listeners
+    dot.on("mouseover", handleMouseOver)
+       .on("mouseout", handleMouseOut);
+    
+    // Add larger invisible circle for better interaction
+    dotGroup.append("circle")
+      .attr("cx", x(pt.Year))
+      .attr("cy", y(pt.LandAvgTemp))
+      .attr("r", 15)
+      .attr("fill", "transparent")
+      .style("pointer-events", "all")
+      .on("mouseover", handleMouseOver)
+      .on("mouseout", handleMouseOut);
+  });
+
+  // Raise highlights above voronoi layer
+  highlightsGroup.raise();
+
+  // Inject Scene 1 caption
+  d3.select(".narrative-caption")
+    .html(
+      `<strong>Why it matters:</strong> A 2°C rise may not seem much, 
+      but it's enough to intensify wildfires, flood coastal cities, 
+      and threaten global food security.`
+    )
+    .style("opacity", 1)
+    .style("display", "block");
 }

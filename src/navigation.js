@@ -59,29 +59,25 @@ export function initNavigation() {
     // Set initial state
     let currentSceneIndex = 0;
 
-    // Handle arrow navigation
+    // Handle arrow navigation with wraparound
     prevArrow.addEventListener('click', () => {
-        if (currentSceneIndex > 0) {
-            currentSceneIndex--;
-            const scene = scenes[currentSceneIndex];
-            updateActiveScene(scene.id);
-            scene.init();
-        }
+        currentSceneIndex = (currentSceneIndex - 1 + scenes.length) % scenes.length;
+        const scene = scenes[currentSceneIndex];
+        updateActiveScene(scene.id);
+        scene.init();
     });
 
     nextArrow.addEventListener('click', () => {
-        if (currentSceneIndex < scenes.length - 1) {
-            currentSceneIndex++;
-            const scene = scenes[currentSceneIndex];
-            updateActiveScene(scene.id);
-            scene.init();
-        }
+        currentSceneIndex = (currentSceneIndex + 1) % scenes.length;
+        const scene = scenes[currentSceneIndex];
+        updateActiveScene(scene.id);
+        scene.init();
     });
 
-    // Update arrow states
+    // Update arrow states - always enabled
     function updateArrows() {
-        prevArrow.disabled = currentSceneIndex === 0;
-        nextArrow.disabled = currentSceneIndex === scenes.length - 1;
+        prevArrow.disabled = false;
+        nextArrow.disabled = false;
     }
 
     // Set initial arrow states

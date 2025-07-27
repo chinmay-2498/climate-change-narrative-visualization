@@ -1,19 +1,39 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Global Climate Change Trends</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Climate Change Narrative</title>
   <link rel="stylesheet" href="public/assets/styles/main.css" />
 </head>
 <body>
-  <main class="container">
-    <h1 class="page-title">Global Climate Change Trends</h1>
-    <div id="navigation"></div>
-    <div class="scene-section">
-      <div id="viz"></div>
+  <h1 class="page-title">Global Climate Change Trends</h1>
+
+  <div id="navigation"></div>
+
+  <div class="scene-section">
+    <div class="caption-left">
+      <div class="narrative-caption" id="caption-1">
+        <h3>Rising Global Temperatures</h3>
+        <p>Since 1900, Earth has experienced a significant increase in average temperatures, with the trend becoming more pronounced after 1980.</p>
+      </div>
+      <div class="narrative-caption" id="caption-2">
+        <h3>Land vs Ocean</h3>
+        <p>Land temperatures show greater variability and faster warming compared to combined land-ocean measurements, highlighting the ocean's moderating effect on climate.</p>
+      </div>
     </div>
-  </main>
+    <div id="viz"></div>
+    <div class="caption-right">
+      <div class="narrative-caption" id="caption-3">
+        <h3>Recent Acceleration</h3>
+        <p>The rate of warming has accelerated in recent decades, with the period since 2000 showing some of the most dramatic increases in recorded history.</p>
+      </div>
+      <div class="narrative-caption" id="caption-4">
+        <h3>Critical Thresholds</h3>
+        <p>The observed temperature increases are approaching critical thresholds that scientists warn could trigger irreversible changes in Earth's climate systems.</p>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="src/main.js"></script>
 </body>
