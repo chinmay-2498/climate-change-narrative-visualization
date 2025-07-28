@@ -48,19 +48,60 @@ export async function initScene2() {
     .style('color', COLORS.text)
     .text('View:');
 
-  // Dropdown for selecting the view type
-  const select = controls.append('select')
-    .attr('id', 'chart-type-select')
-    .style('padding', '4px 8px')
-    .style('font-size', '14px');
+  /*
+   * Rather than using a plain <select>, we create a small toggle button
+   * group for switching between the line and scatter views.  Each
+   * button adopts a similar style to the navigation buttons: a
+   * coloured border with a filled background when active.  Clicking
+   * either button re‑renders the chart with the chosen view and
+   * updates the active state.
+   */
+  const toggleGroup = controls.append('div')
+    .attr('class', 'view-toggle-group')
+    .style('display', 'flex')
+    .style('gap', '8px');
 
-  const options = ['Line Chart', 'Scatter Plot'];
-  select.selectAll('option')
-    .data(options)
-    .enter()
-    .append('option')
-    .attr('value', d => d)
-    .text(d => d);
+  // Helper to style buttons uniformly
+  function styleToggleButton(btn, active) {
+    btn.style('padding', '6px 12px')
+      .style('border', `2px solid ${COLORS.co2}`)
+      .style('border-radius', '6px')
+      .style('font-size', '14px')
+      .style('cursor', 'pointer')
+      .style('background', active ? COLORS.co2 : '#fff')
+      .style('color', active ? '#fff' : COLORS.text)
+      .style('transition', 'all 0.2s ease');
+  }
+
+  // Initial state
+  let currentType = 'Line Chart';
+
+  // Create the two toggle buttons
+  const lineBtn = toggleGroup.append('button')
+    .text('Line Chart');
+  const scatterBtn = toggleGroup.append('button')
+    .text('Scatter Plot');
+  // Apply initial styles
+  styleToggleButton(lineBtn, true);
+  styleToggleButton(scatterBtn, false);
+
+  // Click handlers for toggles
+  lineBtn.on('click', () => {
+    if (currentType !== 'Line Chart') {
+      currentType = 'Line Chart';
+      styleToggleButton(lineBtn, true);
+      styleToggleButton(scatterBtn, false);
+      renderChart(currentType);
+    }
+  });
+  scatterBtn.on('click', () => {
+    if (currentType !== 'Scatter Plot') {
+      currentType = 'Scatter Plot';
+      styleToggleButton(lineBtn, false);
+      styleToggleButton(scatterBtn, true);
+      renderChart(currentType);
+    }
+  });
 
   // Container for the SVG chart; we clear its contents when switching
   const chartWrapper = viz.append('div')
@@ -128,7 +169,11 @@ export async function initScene2() {
 
     const svg = chartWrapper.append('svg')
       .attr('viewBox', `0 0 ${width} ${height}`)
-      .attr('class', 'chart-card');
+      .attr('class', 'chart-card')
+      // Override the default hidden state from .chart-card and make
+      // sure the chart is visible immediately
+      .style('opacity', 1)
+      .style('transform', 'translateY(0)');
 
     // Scales
     const x = d3.scaleLinear()
@@ -335,7 +380,10 @@ export async function initScene2() {
 
     const svg = chartWrapper.append('svg')
       .attr('viewBox', `0 0 ${width} ${height}`)
-      .attr('class', 'chart-card');
+      .attr('class', 'chart-card')
+      // Override the default hidden state from .chart-card
+      .style('opacity', 1)
+      .style('transform', 'translateY(0)');
 
     // Scales
     const x = d3.scaleLinear()
@@ -467,11 +515,10 @@ export async function initScene2() {
     regLegend.append('span').text('Regression Line');
   }
 
-  // When the user changes the drop‑down, re‑render the appropriate chart
-  select.on('change', function () {
-    const choice = d3.select(this).property('value');
-    renderChart(choice);
-  });
+
+  // Note: we replaced the native select with our own toggle buttons.  The
+  // click handlers on those buttons call renderChart() as needed, so
+  // there is no select change handler here.
 
   // Render the default view (line chart) and fade in the caption
   renderChart('Line Chart');
