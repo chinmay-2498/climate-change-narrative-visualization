@@ -8,97 +8,34 @@ export async function initScene2() {
     accent: "#2a9d8f", // green accent (used for regression)
     text: "#1d3557"
   };
-
-  // Remove any existing captions from other scenes
-  d3.select('.caption-left').html('');
-  d3.select('.caption-right').html('');
-
-  // Hide the replay button if it was shown by the previous scene
-  d3.select('#replay-button')
-    .style('opacity', 0)
-    .style('transform', 'scale(0)')
-    .style('display', 'none');
-
-  const viz = d3.select('#viz');
-  viz.html('');
-
-  // Top‑level controls container
-  const controls = viz.append('div')
-    .attr('class', 'chart-controls')
-    .style('display', 'flex')
-    // occupy full width so toggles can be centred easily
-    .style('width', '100%')
-    .style('justify-content', 'center')
-    .style('margin', '0 0 10px 0');
-
-  // Centre the toggle controls within the parent and remove the "View" label
-  controls.style('justify-content', 'center');
-
-  const toggleGroup = controls.append('div')
-    .attr('class', 'view-toggle-group')
-    .style('display', 'flex')
-    .style('gap', '8px');
-
-  // Helper to style buttons uniformly
-  function styleToggleButton(btn, active) {
-    btn.style('padding', '6px 12px')
-      .style('border', `2px solid ${COLORS.co2}`)
-      .style('border-radius', '6px')
-      .style('font-size', '14px')
-      .style('cursor', 'pointer')
-      .style('background', active ? COLORS.co2 : '#fff')
-      .style('color', active ? '#fff' : COLORS.text)
-      .style('transition', 'all 0.2s ease');
+  
+  // Load both datasets in parallel and merge them by year
+  console.log("Loading data files...");
+  let tempRaw = [], co2Raw = [];
+  
+  try {
+    // Try with and without 'public/' prefix as file paths might be relative to different roots
+    try {
+      [tempRaw, co2Raw] = await Promise.all([
+        d3.csv('public/assets/data/global_annual_temp.csv', d3.autoType),
+        d3.csv('public/assets/data/global_co2_mt.csv', d3.autoType)
+      ]);
+    } catch (e) {
+      console.log("Trying alternative path without 'public/' prefix");
+      [tempRaw, co2Raw] = await Promise.all([
+        d3.csv('assets/data/global_annual_temp.csv', d3.autoType),
+        d3.csv('assets/data/global_co2_mt.csv', d3.autoType)
+      ]);
+    }
+    console.log("Data loaded successfully:", 
+                tempRaw.length, "temperature records,", 
+                co2Raw.length, "CO2 records");
+  } catch (error) {
+    console.error("Error loading data files:", error);
+    alert("Error loading climate data. Check console for details.");
+    return; // Exit early if we can't load data
   }
-
-  // Initial state
-  let currentType = 'Line Chart';
-
-  // Create the two toggle buttons
-  const lineBtn = toggleGroup.append('button')
-    .text('Line Chart');
-  const scatterBtn = toggleGroup.append('button')
-    .text('Scatter Plot');
-  // Apply initial styles
-  styleToggleButton(lineBtn, true);
-  styleToggleButton(scatterBtn, false);
-
-  // Click handlers for toggles
-  lineBtn.on('click', () => {
-    if (currentType !== 'Line Chart') {
-      currentType = 'Line Chart';
-      styleToggleButton(lineBtn, true);
-      styleToggleButton(scatterBtn, false);
-      renderChart(currentType);
-    }
-  });
-  scatterBtn.on('click', () => {
-    if (currentType !== 'Scatter Plot') {
-      currentType = 'Scatter Plot';
-      styleToggleButton(lineBtn, false);
-      styleToggleButton(scatterBtn, true);
-      renderChart(currentType);
-    }
-  });
-
-  // Container for the SVG chart; we clear its contents when switching
-  const chartWrapper = viz.append('div')
-    .attr('class', 'chart-wrapper')
-    .style('width', '100%');
-
-  // Tooltip used for both charts
-  const tooltip = viz.append('div')
-    .attr('class', 'tooltip');
-
-  viz.selectAll('label').style('display', 'none');
-
-  // Load both datasets in parallel and merge them by year.  We rely
-  // on d3.autoType to convert numeric fields automatically.
-  const [tempRaw, co2Raw] = await Promise.all([
-    d3.csv('public/assets/data/global_annual_temp.csv', d3.autoType),
-    d3.csv('public/assets/data/global_co2_mt.csv', d3.autoType)
-  ]);
-
+  
   // Create a map from year to CO₂ so we can merge quickly
   const co2Map = new Map(co2Raw.map(d => [d.Year, d.CO2_Mt]));
 
@@ -110,6 +47,11 @@ export async function initScene2() {
       CO2_Mt: co2Map.get(d.Year) ?? null
     }))
     .filter(d => d.CO2_Mt !== null);
+    
+  console.log("Merged data:", mergedData.length, "entries");
+  if (mergedData.length === 0) {
+    console.error("No data available for visualization");
+  }
 
   // Milestone years to highlight in the line chart
   const milestoneYears = [1992, 1997, 2015];
@@ -143,10 +85,11 @@ export async function initScene2() {
       text: 'Landmark agreements like the Kyoto Protocol (1997) and the Paris Agreement (2015) demonstrate international recognition of the problem.'
     }
   ];
+  
   const rightCaptions = [
     {
       title: 'Temperature Response',
-      text: 'Over the same period, average land temperatures climbed roughly 1.3 °C, closely tracking the upward surge in emissions.'
+      text: 'Over the same period, average land temperatures climbed roughly 1.3 °C, closely tracking the upward surge in emissions.'
     },
     {
       title: 'Human Activity & Climate',
@@ -154,6 +97,10 @@ export async function initScene2() {
     }
   ];
 
+  // Create the UI elements we'll need for all charts
+  const viz = d3.select('#viz');
+  let chartWrapper, tooltip; // Declare but don't create yet
+  
   // Helper to add narrative captions to the side panels
   function addCaptions() {
     const leftContainer = d3.select('.caption-left');
@@ -193,35 +140,35 @@ export async function initScene2() {
       }, i * 300);
     });
   }
-
-  // Render whichever chart is currently selected
-  function renderChart(type) {
-    // Clear previous chart, legends and tooltip state
-    chartWrapper.selectAll('*').remove();
-    viz.selectAll('.legend').remove();
-    tooltip.style('opacity', 0).style('visibility', 'hidden');
-
-    if (type === 'Scatter Plot') {
-      renderScatterPlot();
-    } else {
-      renderLineChart();
-    }
-  }
-
+  
   // Render the dual‑axis line chart
   function renderLineChart() {
-    const containerWidth = chartWrapper.node().clientWidth;
-    const width = Math.min(900, containerWidth - 20);
+    console.log("Rendering line chart");
+    if (!mergedData || mergedData.length === 0) {
+      console.error("No data available for line chart rendering");
+      return null;
+    }
+    
+    console.log("First data point:", mergedData[0]);
+    console.log("Last data point:", mergedData[mergedData.length-1]);
+    
+    const containerWidth = chartWrapper.node().clientWidth || 900; // Fallback to 900 if clientWidth is 0
+    console.log("Container width:", containerWidth);
+    const width = Math.max(300, Math.min(900, containerWidth - 20)); // Ensure width is at least 300px
     const height = Math.min(500, window.innerHeight * 0.7);
+    console.log("Width:", width, "Height:", height);
     const margin = { top: 80, right: 80, bottom: 60, left: 60 };
 
+    // Create the SVG and store a reference to it
     const svg = chartWrapper.append('svg')
       .attr('viewBox', `0 0 ${width} ${height}`)
+      .attr('width', width)
+      .attr('height', height)
       .attr('class', 'chart-card')
-      // Override the default hidden state from .chart-card and make
-      // sure the chart is visible immediately
-      .style('opacity', 1)
-      .style('transform', 'translateY(0)');
+      .style('opacity', '0')  // Start hidden for animation
+      .style('transform', 'translateY(20px)');  // Start offset for animation
+    
+    console.log("Line chart created:", svg.node() ? "Yes" : "No");
 
     // Scales
     const x = d3.scaleLinear()
@@ -280,7 +227,7 @@ export async function initScene2() {
       .attr('class', 'axis-label')
       .attr('transform', 'rotate(-90)')
       .attr('x', -(height / 2))
-      .attr('y', width - margin.right + 40)
+      .attr('y', width - margin.right + 50) // Increased from 40 to 50 to avoid overlap
       .attr('fill', COLORS.co2)
       .text('CO₂ Emissions (Mt)');
 
@@ -382,9 +329,7 @@ export async function initScene2() {
         tooltip.style('opacity', 0).style('visibility', 'hidden');
       });
 
-    // Highlight milestone years with descriptive tooltips.  Each
-    // highlight dot is interactive—hovering reveals why the year is
-    // significant and displays both temperature and CO₂ values.
+    // Highlight milestone years with descriptive tooltips
     milestones.forEach(({ year, title, description }) => {
       const pt = mergedData.find(d => d.Year === year);
       if (!pt) return;
@@ -435,8 +380,19 @@ export async function initScene2() {
     });
 
     // Legend below the chart
+    svg.style("margin-bottom", "10px"); // Add space between chart and legend
+    
+    // Remove any existing legend first
+    d3.select("#viz .legend").remove();
+    
     const legend = viz.append('div')
-      .attr('class', 'legend');
+      .attr('class', 'legend')
+      .style('display', 'flex')
+      .style('justify-content', 'center')
+      .style('width', '100%')
+      .style('opacity', '0')
+      .style('transform', 'translateY(20px)');
+      
     // Temperature legend
     const tempLegend = legend.append('div')
       .attr('class', 'legend-item');
@@ -444,6 +400,7 @@ export async function initScene2() {
       .attr('class', 'legend-line')
       .style('background', COLORS.temp);
     tempLegend.append('span').text('Land Temperature');
+    
     // CO2 legend
     const co2Legend = legend.append('div')
       .attr('class', 'legend-item');
@@ -451,39 +408,44 @@ export async function initScene2() {
       .attr('class', 'legend-line')
       .style('background', COLORS.co2);
     co2Legend.append('span').text('CO₂ Emissions');
+    
     // Milestone legend
     const milestoneLegend = legend.append('div')
       .attr('class', 'legend-item');
     milestoneLegend.append('div')
-      .attr('class', 'legend-dot')
+      .attr('class', 'legend-dot glow-dot')
       .style('background', COLORS.temp);
     milestoneLegend.append('span').text('Milestone Years');
-
-    // Data credits
-    legend.append('div')
-      .attr('class', 'legend-credit')
-      .style('font-size', '10px')
-      .style('margin-top', '6px')
-      .style('text-align', 'center')
-      .html(
-        `Data sources: <a href="https://ourworldindata.org/co2-and-greenhouse-gas-emissions" target="_blank">Our World in Data</a>, ` +
-        `<a href="https://www.kaggle.com/datasets/berkeleyearth/climate-change-earth-surface-temperature-data" target="_blank">Berkeley Earth</a>`
-      );
+    
+    // Return the created SVG element
+    return svg.node();
   }
 
   // Render the scatter plot with optional regression line
   function renderScatterPlot() {
-    const containerWidth = chartWrapper.node().clientWidth;
-    const width = Math.min(900, containerWidth - 20);
+    console.log("Rendering scatter plot");
+    if (!mergedData || mergedData.length === 0) {
+      console.error("No data available for scatter plot rendering");
+      return null;
+    }
+    
+    console.log("First data point:", mergedData[0]);
+    console.log("Last data point:", mergedData[mergedData.length-1]);
+    
+    const containerWidth = chartWrapper.node().clientWidth || 900; // Fallback to 900 if clientWidth is 0
+    console.log("Container width:", containerWidth);
+    const width = Math.max(300, Math.min(900, containerWidth - 20)); // Ensure width is at least 300px
     const height = Math.min(500, window.innerHeight * 0.7);
+    console.log("Width:", width, "Height:", height);
     const margin = { top: 80, right: 60, bottom: 60, left: 70 };
 
     const svg = chartWrapper.append('svg')
       .attr('viewBox', `0 0 ${width} ${height}`)
+      .attr('width', width)
+      .attr('height', height)
       .attr('class', 'chart-card')
-      // Override the default hidden state from .chart-card
-      .style('opacity', 1)
-      .style('transform', 'translateY(0)');
+      .style('opacity', '0')  // Start hidden for animation
+      .style('transform', 'translateY(20px)');  // Start offset for animation
 
     // Scales
     const x = d3.scaleLinear()
@@ -562,16 +524,12 @@ export async function initScene2() {
       .attr('y', 52)
       .text('Each dot represents one year');
 
-    // Colour scale for scatter points: early years are lighter, later
-    // years darker.  This communicates time progression without
-    // introducing a new hue family.
+    // Colour scale for scatter points
     const colorScale = d3.scaleLinear()
       .domain(d3.extent(mergedData, d => d.Year))
       .range(['#a8dadc', COLORS.co2]);
-    // Draw points.  Milestone years are rendered in the temperature
-    // colour with a slightly larger radius to set them apart.  We do
-    // not attach individual mouse handlers to circles; instead a
-    // separate overlay handles hover interactions and highlights.
+    
+    // Draw points
     const circles = svg.append('g')
       .selectAll('circle')
       .data(mergedData)
@@ -587,9 +545,11 @@ export async function initScene2() {
 
     // Create a lookup for milestone descriptions
     const milestoneLookup = {};
-    milestones.forEach(m => { milestoneLookup[m.year] = m; });
+    milestones.forEach(m => {
+      milestoneLookup[m.year] = m;
+    });
 
-    // Crosshair lines to aid reading values.  Hidden by default.
+    // Crosshair lines to aid reading values. Hidden by default.
     const crosshair = svg.append('g')
       .style('display', 'none');
     const vLine = crosshair.append('line')
@@ -611,59 +571,62 @@ export async function initScene2() {
       .attr('width', width - margin.left - margin.right)
       .attr('height', height - margin.top - margin.bottom)
       .on('mousemove', (event) => {
-        const [mx, my] = d3.pointer(event);
-        // Determine the nearest data point by Euclidean distance in
-        // pixel space
+        const mouse = d3.pointer(event);
+        const mx = mouse[0];
+        const my = mouse[1];
+        
+        // Find the nearest data point
         let nearest = null;
         let minDist = Infinity;
         circles.each(function(d) {
           const cx = x(d.CO2_Mt);
           const cy = y(d.LandAvgTemp);
-          const dist = (mx - cx) * (mx - cx) + (my - cy) * (my - cy);
+          const dist = Math.sqrt((mx - cx) ** 2 + (my - cy) ** 2);
           if (dist < minDist) {
             minDist = dist;
-            nearest = { d, cx, cy, el: this };
+            nearest = { d, el: this };
           }
         });
-        if (!nearest) return;
-        // Show crosshair lines at the mouse position
-        crosshair.style('display', null);
-        vLine
-          .attr('x1', mx)
-          .attr('x2', mx)
-          .attr('y1', margin.top)
-          .attr('y2', height - margin.bottom);
-        hLine
-          .attr('x1', margin.left)
-          .attr('x2', width - margin.right)
-          .attr('y1', my)
-          .attr('y2', my);
-        // Restore the last highlighted circle
-        if (lastHighlight) {
-          lastHighlight.attr('r', d => milestoneYears.includes(d.Year) ? 6 : 5);
-        }
-        // Enlarge the current circle
-        d3.select(nearest.el).attr('r', 8);
-        lastHighlight = d3.select(nearest.el);
-        // Construct tooltip content.  If the point is a milestone,
-        // include the title and description for additional context.
-        const m = milestoneLookup[nearest.d.Year];
-        let html = `<strong>${nearest.d.Year}</strong><br/>` +
-          `Temp: ${nearest.d.LandAvgTemp.toFixed(2)}°C<br/>` +
-          `CO₂: ${nearest.d.CO2_Mt.toLocaleString()} Mt`;
-        if (m) {
-          html = `<strong>${m.title} (${nearest.d.Year})</strong><br/>${m.description}<br/><br/>` +
-            `Temperature: ${nearest.d.LandAvgTemp.toFixed(2)}°C<br/>` +
+        
+        if (nearest && minDist < 20) { // Only show if close to a point
+          // Show crosshair lines
+          crosshair.style('display', null);
+          vLine
+            .attr('x1', x(nearest.d.CO2_Mt))
+            .attr('x2', x(nearest.d.CO2_Mt))
+            .attr('y1', margin.top)
+            .attr('y2', height - margin.bottom);
+          hLine
+            .attr('x1', margin.left)
+            .attr('x2', width - margin.right)
+            .attr('y1', my)
+            .attr('y2', my);
+          // Restore the last highlighted circle
+          if (lastHighlight) {
+            lastHighlight.attr('r', d => milestoneYears.includes(d.Year) ? 6 : 5);
+          }
+          // Enlarge the current circle
+          d3.select(nearest.el).attr('r', 8);
+          lastHighlight = d3.select(nearest.el);
+          // Construct tooltip content
+          const m = milestoneLookup[nearest.d.Year];
+          let html = `<strong>${nearest.d.Year}</strong><br/>` +
+            `Temp: ${nearest.d.LandAvgTemp.toFixed(2)}°C<br/>` +
             `CO₂: ${nearest.d.CO2_Mt.toLocaleString()} Mt`;
+          if (m) {
+            html = `<strong>${m.title} (${nearest.d.Year})</strong><br/>${m.description}<br/><br/>` +
+              `Temperature: ${nearest.d.LandAvgTemp.toFixed(2)}°C<br/>` +
+              `CO₂: ${nearest.d.CO2_Mt.toLocaleString()} Mt`;
+          }
+          const offset = { x: 15, y: 20 };
+          tooltip
+            .attr('class', 'tooltip highlight-tooltip')
+            .html(html)
+            .style('left', `${event.pageX + offset.x}px`)
+            .style('top', `${event.pageY - offset.y}px`)
+            .style('opacity', 1)
+            .style('visibility', 'visible');
         }
-        const offset = { x: 15, y: 20 };
-        tooltip
-          .attr('class', 'tooltip highlight-tooltip')
-          .html(html)
-          .style('left', `${event.pageX + offset.x}px`)
-          .style('top', `${event.pageY - offset.y}px`)
-          .style('opacity', 1)
-          .style('visibility', 'visible');
       })
       .on('mouseleave', () => {
         // Hide crosshair and tooltip
@@ -729,20 +692,33 @@ export async function initScene2() {
     }
 
     // Legend for scatter plot, including milestone indicator
+    svg.style("margin-bottom", "10px"); // Add space between chart and legend
+    
+    // Remove any existing legend first
+    d3.select("#viz .legend").remove();
+    
     const legend = viz.append('div')
-      .attr('class', 'legend');
+      .attr('class', 'legend')
+      .style('display', 'flex')
+      .style('justify-content', 'center')
+      .style('width', '100%')
+      .style('opacity', '0')
+      .style('transform', 'translateY(20px)');
+      
     const pointLegend = legend.append('div')
       .attr('class', 'legend-item');
     pointLegend.append('div')
       .attr('class', 'legend-dot')
       .style('background', COLORS.co2);
     pointLegend.append('span').text('Year (normal)');
+    
     const milestoneLegendItem = legend.append('div')
       .attr('class', 'legend-item');
     milestoneLegendItem.append('div')
-      .attr('class', 'legend-dot')
+      .attr('class', 'legend-dot glow-dot')
       .style('background', COLORS.temp);
     milestoneLegendItem.append('span').text('Milestone Year');
+    
     const regLegend = legend.append('div')
       .attr('class', 'legend-item');
     regLegend.append('div')
@@ -750,31 +726,240 @@ export async function initScene2() {
       .style('background', COLORS.accent)
       .style('height', '2px');
     regLegend.append('span').text('Regression Line');
+    
+    // Return the created SVG element
+    return svg.node();
+  }
+  
+  // Render whichever chart is currently selected
+  function renderChart(type) {
+    console.log("renderChart called with type:", type);
+    console.log("Data paths exist:", !!tempRaw, !!co2Raw);
+    console.log("Merged data length:", mergedData.length);
+    
+    // Clear previous chart, legends and tooltip state
+    chartWrapper.selectAll('*').remove();
+    viz.selectAll('.legend').remove();
+    tooltip.style('opacity', 0).style('visibility', 'hidden');
 
-    // Data credits for scatter plot
-    legend.append('div')
-      .attr('class', 'legend-credit')
-      .style('font-size', '10px')
-      .style('margin-top', '6px')
-      .style('text-align', 'center')
-      .html(
-        `Data sources: <a href="https://ourworldindata.org/co2-and-greenhouse-gas-emissions" target="_blank">Our World in Data</a>, ` +
-        `<a href="https://www.kaggle.com/datasets/berkeleyearth/climate-change-earth-surface-temperature-data" target="_blank">Berkeley Earth</a>`
-      );
+    // Store a global reference to the svg after rendering
+    let chartSvg;
+    
+    if (type === 'Scatter Plot') {
+      chartSvg = renderScatterPlot();
+    } else {
+      chartSvg = renderLineChart();
+    }
+    
+    // Check if SVG was created
+    const svgNode = chartWrapper.select("svg").node();
+    console.log("Chart created:", svgNode ? "Yes" : "No");
+    if (svgNode) {
+      console.log("Chart dimensions:", 
+                d3.select(svgNode).attr("width"),
+                d3.select(svgNode).attr("height"));
+      // Give it an ID to make selection easier later
+      d3.select(svgNode).attr("id", "scene2-chart");
+    }
+    
+    return svgNode;
+  }
+  
+  // Function to add controls
+  function addControls() {
+    // Top‑level controls container
+    const controls = viz.append('div')
+      .attr('class', 'chart-controls')
+      .style('display', 'flex')
+      // occupy full width so toggles can be centred easily
+      .style('width', '100%')
+      .style('justify-content', 'center')
+      .style('margin', '0 0 10px 0');
+
+    // Centre the toggle controls within the parent
+    controls.style('justify-content', 'center');
+
+    const toggleGroup = controls.append('div')
+      .attr('class', 'view-toggle-group')
+      .style('display', 'flex')
+      .style('gap', '8px');
+
+    // Helper to style buttons uniformly
+    function styleToggleButton(btn, active) {
+      btn.style('padding', '6px 12px')
+        .style('border', `2px solid ${COLORS.co2}`)
+        .style('border-radius', '6px')
+        .style('font-size', '14px')
+        .style('cursor', 'pointer')
+        .style('background', active ? COLORS.co2 : '#fff')
+        .style('color', active ? '#fff' : COLORS.text)
+        .style('transition', 'all 0.2s ease');
+    }
+
+    // Initial state
+    let currentType = 'Line Chart';
+
+    // Create the two toggle buttons
+    const lineBtn = toggleGroup.append('button')
+      .text('Line Chart');
+    const scatterBtn = toggleGroup.append('button')
+      .text('Scatter Plot');
+      
+    // Apply initial styles
+    styleToggleButton(lineBtn, true);
+    styleToggleButton(scatterBtn, false);
+
+    // Click handlers for toggles
+    lineBtn.on('click', () => {
+      if (currentType !== 'Line Chart') {
+        currentType = 'Line Chart';
+        styleToggleButton(lineBtn, true);
+        styleToggleButton(scatterBtn, false);
+        
+        // Render chart and make visible immediately
+        renderChart(currentType);
+        
+        // Make chart visible immediately when switching
+        const chartSvg = chartWrapper.select("svg");
+        if (!chartSvg.empty()) {
+          chartSvg
+            .style("opacity", "1")
+            .style("transform", "translateY(0)");
+        }
+        
+        // Also make legend visible
+        const legend = viz.select('.legend');
+        if (!legend.empty()) {
+          legend.style('opacity', '1').style('transform', 'translateY(0)');
+        }
+      }
+    });
+    
+    scatterBtn.on('click', () => {
+      if (currentType !== 'Scatter Plot') {
+        currentType = 'Scatter Plot';
+        styleToggleButton(lineBtn, false);
+        styleToggleButton(scatterBtn, true);
+        
+        // Render chart and make visible immediately
+        renderChart(currentType);
+        
+        // Make chart visible immediately when switching
+        const chartSvg = chartWrapper.select("svg");
+        if (!chartSvg.empty()) {
+          chartSvg
+            .style("opacity", "1")
+            .style("transform", "translateY(0)");
+        }
+        
+        // Also make legend visible
+        const legend = viz.select('.legend');
+        if (!legend.empty()) {
+          legend.style('opacity', '1').style('transform', 'translateY(0)');
+        }
+      }
+    });
   }
 
+  // Function to animate the entire scene
+  async function animateScene() {
+    console.log("Starting animation sequence...");
+    
+    // Clear existing content and reset state
+    console.log("Clearing captions...");
+    d3.select('.caption-left').html('');
+    d3.select('.caption-right').html('');
+    
+    // Hide replay button initially
+    console.log("Hiding replay button...");
+    const replayButton = d3.select("#replay-button")
+      .style("opacity", "0")
+      .style("transform", "scale(0)");
 
-  // Note: we replaced the native select with our own toggle buttons.  The
-  // click handlers on those buttons call renderChart() as needed, so
-  // there is no select change handler here.
-
-  // Insert the narrative captions into the side panels and animate them
-  addCaptions();
-  // Render the default view (line chart)
-  renderChart('Line Chart');
-  // Fade in the side captions after a short delay.  Without a
-  // central caption we simply animate the side panels.
-  setTimeout(() => {
+    // Clear visualization area
+    console.log("Clearing visualization area...");
+    viz.html('');
+    
+    // Recreate the chart wrapper that was cleared
+    chartWrapper = viz.append('div')
+      .attr('class', 'chart-wrapper')
+      .style('width', '100%');
+      
+    // Recreate the tooltip that was cleared  
+    tooltip = viz.append('div')
+      .attr('class', 'tooltip');
+    
+    // Add captions with initial hidden state
+    console.log("Adding captions...");
+    addCaptions();
+    
+    // Add top-level controls
+    console.log("Adding controls...");
+    addControls();
+    
+    // Create chart with initial hidden state
+    console.log("Rendering chart...");
+    renderChart('Line Chart');
+    
+    // Start animation sequence
+    console.log("Waiting for animation delay...");
+    await new Promise(resolve => setTimeout(resolve, 500)); // Initial delay
+    
+    // Animate chart
+    const chart = chartWrapper.select("svg");
+    console.log("Chart to animate:", chart.empty() ? "Not Found" : "Found");
+    
+    if (!chart.empty()) {
+      console.log("Chart style before animation:", 
+                  chart.style("opacity"),
+                  chart.style("transform"));
+                
+      chart.transition()
+        .duration(800)
+        .style("opacity", "1")
+        .style("transform", "translateY(0)")
+        .on("end", () => {
+          console.log("Chart animation complete");
+        });
+    } else {
+      console.error("Chart element not found - could not animate");
+    }
+    
+    // Animate legend
+    await new Promise(resolve => setTimeout(resolve, 400));
+    const legend = viz.select(".legend");
+    console.log("Legend to animate:", legend.empty() ? "Not Found" : "Found");
+    
+    if (!legend.empty()) {
+      legend.transition()
+        .duration(500)
+        .style("opacity", "1")
+        .style("transform", "translateY(0)");
+    } else {
+      console.error("Legend element not found - could not animate");
+      // Try to find and show any existing legend immediately as fallback
+      d3.selectAll("#viz .legend")
+        .style("opacity", "1")
+        .style("transform", "translateY(0)");
+    }
+    
+    // Animate captions
+    await new Promise(resolve => setTimeout(resolve, 500));
     animateCaptions();
-  }, 800);
+    
+    // Show replay button
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    replayButton
+      .style("display", "flex")
+      .transition()
+      .duration(300)
+      .style("opacity", "1")
+      .style("transform", "scale(1)");
+  }
+
+  // Add replay button click handler
+  d3.select("#replay-button").on("click", animateScene);
+
+  // Start the animation sequence
+  animateScene();
 }
