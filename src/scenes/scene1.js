@@ -1,4 +1,5 @@
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+import { globalTooltip, UnifiedTooltip } from '../d3-components/tooltip.js';
 
 export async function initScene1() {
   // Function to add captions
@@ -248,9 +249,8 @@ export async function initScene1() {
   highlightLegend.append("span")
     .text("Significant Events");
 
-  const tooltip = d3.select("#viz")
-    .append("div")
-    .attr("class", "tooltip");
+  // Initialize tooltip
+  globalTooltip.init();
 
   // Create vertical guide line
   const verticalLine = svg.append("line")
@@ -346,26 +346,16 @@ export async function initScene1() {
     .attr("d", (_, i) => voronoi.renderCell(i))
     .attr("fill", "transparent")
     .on("mouseover", (event, d) => {
-      const mouseX = event.pageX;
-      const mouseY = event.pageY;
-      const tooltipOffset = { x: 15, y: 20 };
-
-      tooltip
-        .attr("class", "tooltip")
-        .html(`
-          <strong>${d.Year}</strong>
-          Land: ${d.LandAvgTemp.toFixed(2)}°C<br>
-          Ocean: ${d.LandOceanAvgTemp.toFixed(2)}°C
-        `)
-        .style("left", `${mouseX + tooltipOffset.x}px`)
-        .style("top", `${mouseY - tooltipOffset.y}px`)
-        .style("opacity", 1)
-        .style("visibility", "visible");
-
+      const content = `
+        <strong>${d.Year}</strong><br>
+        Land: ${d.LandAvgTemp.toFixed(2)}°C<br>
+        Ocean: ${d.LandOceanAvgTemp.toFixed(2)}°C
+      `;
+      globalTooltip.show(content, event);
       updateVerticalLine(d.Year);
     })
     .on("mouseout", () => {
-      tooltip.style("opacity", 0).style("visibility", "hidden");
+      globalTooltip.hide();
       verticalLine.style("opacity", 0);
     });
 
@@ -387,31 +377,15 @@ export async function initScene1() {
       event.stopPropagation(); // Prevent event bubbling
       console.log(`Mouseover triggered for year ${year}`);
       
-      // Calculate tooltip position
-      const mouseX = event.pageX;
-      const mouseY = event.pageY;
-      const tooltipOffset = { x: 15, y: 20 }; // Offset from cursor
+      const content = UnifiedTooltip.formatHighlight(`${label} (${year})`, 
+        `${description}<br><br>Temperature: ${pt.LandAvgTemp.toFixed(2)}°C`);
       
-      tooltip
-        .attr("class", "tooltip highlight-tooltip")
-        .html(`
-          <strong>${label} (${year})</strong>
-          ${description}<br><br>
-          Temperature: ${pt.LandAvgTemp.toFixed(2)}°C
-        `)
-        .style("left", `${mouseX + tooltipOffset.x}px`)
-        .style("top", `${mouseY - tooltipOffset.y}px`)
-        .style("opacity", 1)
-        .style("visibility", "visible");
-      
-      console.log('Tooltip HTML set to:', tooltip.html());
-      console.log('Tooltip position:', { left: mouse.x, top: mouse.y });
-      
+      globalTooltip.show(content, event, { className: 'highlight-tooltip' });
       updateVerticalLine(pt.Year);
     };
 
     const handleMouseOut = () => {
-      tooltip.style("opacity", 0).style("visibility", "hidden");
+      globalTooltip.hide();
       verticalLine.style("opacity", 0);
     };
 

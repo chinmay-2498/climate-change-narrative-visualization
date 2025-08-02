@@ -1,5 +1,6 @@
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 import * as topojson from "https://cdn.jsdelivr.net/npm/topojson-client@3/+esm";
+import { globalTooltip, UnifiedTooltip } from '../d3-components/tooltip.js';
 
 export async function initScene3() {
   // Color palette and constants
@@ -309,7 +310,7 @@ export async function initScene3() {
 
   // Set up visualization area
   const viz = d3.select('#viz');
-  let mapWrapper, tooltip, slider, yearDisplay, selectedCountry = null;
+  let mapWrapper, slider, yearDisplay, selectedCountry = null;
   let currentYear = 1900;
 
   // Left and right captions content
@@ -433,22 +434,8 @@ export async function initScene3() {
 
     console.log("Color scale domain:", colorDomain);
 
-    // Create enhanced tooltip
-    if (!tooltip) {
-      tooltip = viz.append('div')
-        .attr('class', 'enhanced-tooltip')
-        .style('opacity', 0)
-        .style('position', 'absolute')
-        .style('background', 'rgba(26, 32, 56, 0.95)')
-        .style('color', 'white')
-        .style('padding', '12px 16px')
-        .style('border-radius', '8px')
-        .style('font-size', '13px')
-        .style('pointer-events', 'none')
-        .style('z-index', '1000')
-        .style('box-shadow', '0 4px 12px rgba(0,0,0,0.3)')
-        .style('border', '1px solid rgba(255,255,255,0.1)');
-    }
+    // Initialize unified tooltip system
+    globalTooltip.init();
 
     // Render countries with enhanced interactivity
     function renderCountries(year) {
@@ -505,27 +492,26 @@ export async function initScene3() {
               .style('stroke', COLORS.highlight);
           }
           
-          // Enhanced tooltip
-          tooltip
-            .style('opacity', 1)
-            .html(`
-              <div style="font-weight: bold; margin-bottom: 6px;">${d.properties.name}</div>
-              <div style="margin-bottom: 4px;">Year: ${year}</div>
-              <div style="margin-bottom: 4px;">Temperature Change: ${delta !== null ? 
-                `<span style="color: ${delta >= 0 ? '#ff6b6b' : '#4ecdc4'}">${delta >= 0 ? '+' : ''}${delta.toFixed(2)}°C</span>` : 
-                '<span style="color: #999">No data</span>'}</div>
-              ${!selectedCountry ? '<div style="font-size: 11px; opacity: 0.8; margin-top: 6px;">Click to select this country</div>' : ''}
-            `)
-            .style('left', `${event.pageX + 15}px`)
-            .style('top', `${event.pageY - 10}px`);
+          // Enhanced tooltip using unified system
+          const hasData = delta !== null;
+          let content;
+          
+          if (hasData) {
+            content = UnifiedTooltip.formatCountryData(d.properties.name, year, delta, true);
+            if (!selectedCountry) {
+              content += '<div style="font-size: 11px; opacity: 0.8; margin-top: 6px;">Click to select this country</div>';
+            }
+          } else {
+            content = UnifiedTooltip.formatCountryData(d.properties.name, year, 0, false);
+          }
+          
+          globalTooltip.show(content, event, { className: 'country-tooltip' });
         })
         .on('mousemove', function(event) {
-          tooltip
-            .style('left', `${event.pageX + 15}px`)
-            .style('top', `${event.pageY - 10}px`);
+          globalTooltip.updatePosition(event);
         })
         .on('mouseout', function() {
-          tooltip.style('opacity', 0);
+          globalTooltip.hide();
           
           // Reset hover styling
           if (!selectedCountry) {

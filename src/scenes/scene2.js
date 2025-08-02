@@ -1,4 +1,5 @@
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+import { globalTooltip, UnifiedTooltip } from '../d3-components/tooltip.js';
 
 export async function initScene2() {
   // Colour palette matching the rest of the narrative
@@ -99,7 +100,7 @@ export async function initScene2() {
 
   // Create the UI elements we'll need for all charts
   const viz = d3.select('#viz');
-  let chartWrapper, tooltip; // Declare but don't create yet
+  let chartWrapper; // Declare but don't create yet
   
   // Helper to add narrative captions to the side panels
   function addCaptions() {
@@ -310,23 +311,17 @@ export async function initScene2() {
           .attr('r', 5)
           .attr('fill', COLORS.co2);
         // Show tooltip near the cursor
-        const tooltipOffset = { x: 15, y: 20 };
-        tooltip
-          .attr('class', 'tooltip')
-          .html(
-            `<strong>${d0.Year}</strong><br/>
-            Temp: ${d0.LandAvgTemp.toFixed(2)}°C<br/>
-            CO₂: ${d0.CO2_Mt.toLocaleString()} Mt`
-          )
-          .style('left', `${event.pageX + tooltipOffset.x}px`)
-          .style('top', `${event.pageY - tooltipOffset.y}px`)
-          .style('opacity', 1)
-          .style('visibility', 'visible');
+        const content = `
+          <strong>${d0.Year}</strong><br/>
+          Temp: ${d0.LandAvgTemp.toFixed(2)}°C<br/>
+          CO₂: ${d0.CO2_Mt.toLocaleString()} Mt
+        `;
+        globalTooltip.show(content, event);
       })
       .on('mouseleave', () => {
         markers.selectAll('*').remove();
         vline.style('opacity', 0);
-        tooltip.style('opacity', 0).style('visibility', 'hidden');
+        globalTooltip.hide();
       });
 
     // Highlight milestone years with descriptive tooltips
@@ -353,20 +348,11 @@ export async function initScene2() {
       // Hover handlers
       highlightGroup.on('mouseover', (event) => {
         event.stopPropagation();
-        const mouseX = event.pageX;
-        const mouseY = event.pageY;
-        const offset = { x: 15, y: 20 };
-        tooltip
-          .attr('class', 'tooltip highlight-tooltip')
-          .html(
-            `<strong>${title} (${year})</strong><br/>${description}<br/><br/>` +
-            `Temperature: ${pt.LandAvgTemp.toFixed(2)}°C<br/>` +
-            `CO₂: ${pt.CO2_Mt.toLocaleString()} Mt`
-          )
-          .style('left', `${mouseX + offset.x}px`)
-          .style('top', `${mouseY - offset.y}px`)
-          .style('opacity', 1)
-          .style('visibility', 'visible');
+        const content = UnifiedTooltip.formatHighlight(`${title} (${year})`, 
+          `${description}<br/><br/>Temperature: ${pt.LandAvgTemp.toFixed(2)}°C<br/>CO₂: ${pt.CO2_Mt.toLocaleString()} Mt`);
+        
+        globalTooltip.show(content, event, { className: 'highlight-tooltip' });
+        
         // Show vertical guide line at the milestone year
         vline
           .attr('x1', x(pt.Year))
@@ -374,7 +360,7 @@ export async function initScene2() {
           .style('opacity', 0.7);
       });
       highlightGroup.on('mouseout', () => {
-        tooltip.style('opacity', 0).style('visibility', 'hidden');
+        globalTooltip.hide();
         vline.style('opacity', 0);
       });
     });
@@ -608,30 +594,28 @@ export async function initScene2() {
           // Enlarge the current circle
           d3.select(nearest.el).attr('r', 8);
           lastHighlight = d3.select(nearest.el);
-          // Construct tooltip content
+          // Construct tooltip content using unified system
           const m = milestoneLookup[nearest.d.Year];
-          let html = `<strong>${nearest.d.Year}</strong><br/>` +
-            `Temp: ${nearest.d.LandAvgTemp.toFixed(2)}°C<br/>` +
-            `CO₂: ${nearest.d.CO2_Mt.toLocaleString()} Mt`;
+          let content;
+          
           if (m) {
-            html = `<strong>${m.title} (${nearest.d.Year})</strong><br/>${m.description}<br/><br/>` +
-              `Temperature: ${nearest.d.LandAvgTemp.toFixed(2)}°C<br/>` +
-              `CO₂: ${nearest.d.CO2_Mt.toLocaleString()} Mt`;
+            content = UnifiedTooltip.formatHighlight(`${m.title} (${nearest.d.Year})`, 
+              `${m.description}<br/><br/>Temperature: ${nearest.d.LandAvgTemp.toFixed(2)}°C<br/>CO₂: ${nearest.d.CO2_Mt.toLocaleString()} Mt`);
+          } else {
+            content = `
+              <strong>${nearest.d.Year}</strong><br/>
+              Temp: ${nearest.d.LandAvgTemp.toFixed(2)}°C<br/>
+              CO₂: ${nearest.d.CO2_Mt.toLocaleString()} Mt
+            `;
           }
-          const offset = { x: 15, y: 20 };
-          tooltip
-            .attr('class', 'tooltip highlight-tooltip')
-            .html(html)
-            .style('left', `${event.pageX + offset.x}px`)
-            .style('top', `${event.pageY - offset.y}px`)
-            .style('opacity', 1)
-            .style('visibility', 'visible');
+          
+          globalTooltip.show(content, event, { className: 'scatter-tooltip' });
         }
       })
       .on('mouseleave', () => {
         // Hide crosshair and tooltip
         crosshair.style('display', 'none');
-        tooltip.style('opacity', 0).style('visibility', 'hidden');
+        globalTooltip.hide();
         // Reset highlighted circle
         if (lastHighlight) {
           lastHighlight.attr('r', d => milestoneYears.includes(d.Year) ? 6 : 5);
@@ -740,7 +724,7 @@ export async function initScene2() {
     // Clear previous chart, legends and tooltip state
     chartWrapper.selectAll('*').remove();
     viz.selectAll('.legend').remove();
-    tooltip.style('opacity', 0).style('visibility', 'hidden');
+    globalTooltip.hide();
 
     // Store a global reference to the svg after rendering
     let chartSvg;
@@ -885,9 +869,8 @@ export async function initScene2() {
       .attr('class', 'chart-wrapper')
       .style('width', '100%');
       
-    // Recreate the tooltip that was cleared  
-    tooltip = viz.append('div')
-      .attr('class', 'tooltip');
+    // Initialize unified tooltip system
+    globalTooltip.init();
     
     // Add captions with initial hidden state
     console.log("Adding captions...");
