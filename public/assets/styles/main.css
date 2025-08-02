@@ -4,7 +4,8 @@ body {
   background: #f8f9fa;
   color: #1d3557;
   overflow-x: hidden;
-  overflow-y: hidden;
+  overflow-y: auto; /* Allow vertical scrolling to prevent footer overlap */
+  min-height: 100vh; /* Ensure full viewport height */
 }
 
 .page-title {
@@ -61,9 +62,10 @@ body {
   display: grid;
   grid-template-columns: minmax(250px, 1fr) minmax(auto, 800px) minmax(250px, 1fr);
   gap: 20px;
-  padding: 0 40px 30px;
+  padding: 0 40px 50px; /* Increased bottom padding to avoid footer overlap */
   max-width: 1400px;
   margin: 0 auto;
+  margin-bottom: 40px; /* Add margin bottom for footer space */
 }
 
 .caption-left {
@@ -298,4 +300,299 @@ body {
   background: #e63946;
   transition: width 0.3s ease;
   border-radius: 2px;
+}
+
+.data-source-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  font-size: 12px;
+  color: #1d3557;
+  text-align: center;
+  padding: 8px 0;
+  background: rgba(248, 249, 250, 0.95);
+  border-top: 1px solid #e5e5e5;
+  z-index: 900;
+}
+
+.data-source-footer a {
+  color: #457b9d;
+  text-decoration: none;
+}
+
+.data-source-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Scene 3 - Map Styles */
+.map-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.map-svg {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.8s ease;
+}
+
+.country {
+  cursor: pointer;
+  transition: stroke-width 0.2s ease;
+}
+
+.country:hover {
+  stroke-width: 2px !important;
+}
+
+.map-legend {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.5s ease;
+}
+
+.map-controls {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.5s ease;
+}
+
+.year-display {
+  font-size: 24px;
+  font-weight: bold;
+  color: #1d3557;
+  margin-bottom: 10px;
+}
+
+.year-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #e5e5e5;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.year-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #457b9d;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.year-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #457b9d;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.year-slider::-webkit-slider-track {
+  height: 6px;
+  border-radius: 3px;
+  background: #e5e5e5;
+}
+
+.year-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: #e5e5e5;
+  border: none;
+}
+
+.tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+/* Enhanced Scene 3 Styles */
+.enhanced-tooltip {
+  position: absolute;
+  background: rgba(26, 32, 56, 0.95);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+}
+
+.enhanced-controls {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.8);
+}
+
+.enhanced-legend {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.8);
+}
+
+.enhanced-year-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(to right, #e9ecef 0%, #457b9d 0%, #457b9d 100%, #e9ecef 100%);
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.enhanced-year-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  border: 2px solid white;
+  transition: all 0.2s ease;
+}
+
+.enhanced-year-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.enhanced-year-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  border: 2px solid white;
+  transition: all 0.2s ease;
+}
+
+.enhanced-year-slider::-moz-range-thumb:hover {
+  transform: scale(1.2);
+}
+
+.enhanced-year-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: #e9ecef;
+  border: none;
+}
+
+.selection-container {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.clear-selection-btn {
+  transition: all 0.2s ease;
+}
+
+.clear-selection-btn:hover {
+  background: #d63031 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.clear-selection-btn:active {
+  transform: translateY(0);
+}
+
+.country {
+  transition: all 0.3s ease;
+}
+
+.country:hover {
+  filter: brightness(1.1);
+}
+
+.map-svg {
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.1));
+}
+
+/* Responsive design for enhanced controls */
+@media (max-width: 768px) {
+  .enhanced-controls {
+    margin: 16px;
+    padding: 16px;
+    max-width: calc(100% - 32px);
+  }
+  
+  .enhanced-legend {
+    margin: 16px;
+    padding: 12px;
+    max-width: calc(100% - 32px);
+  }
+  
+  .enhanced-year-slider::-webkit-slider-thumb {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .enhanced-year-slider::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* Year display gradient text animation */
+.year-display {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 3s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+  50% {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
 }

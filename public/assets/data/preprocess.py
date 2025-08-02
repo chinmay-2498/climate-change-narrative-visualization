@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 
 # Define range to include in the final dataset
 START_YEAR = 1900
@@ -73,9 +74,34 @@ def process_state_temperatures(path="raw-dataset/GlobalLandTemperaturesByState.c
     grouped.to_csv("us_states_annual_temp.csv", index=False)
     print("Saved us_states_annual_temp.csv")
 
+def process_co2_data(input_path="raw-dataset/owid-co2-data.csv", output_path="global_co2_mt.csv"):
+    if os.path.exists(input_path):
+        print(f"Processing CO2 data from {input_path}")
+        co2_df = pd.read_csv(input_path)
+
+        # Filter only 'World' data
+        co2_world = co2_df[co2_df['country'] == 'World']
+
+        # Filter years between 1900 and 2015
+        co2_world = co2_world[(co2_world['year'] >= START_YEAR) & (co2_world['year'] <= END_YEAR)]
+
+        # Keep only necessary columns
+        co2_clean = co2_world[['year', 'co2']].rename(columns={
+                    'year': 'Year',
+                    'co2': 'CO2_Mt'
+        })
+
+        # Drop rows with missing CO2
+        co2_clean = co2_clean.dropna(subset=['CO2_Mt'])
+
+        co2_clean.to_csv(output_path, index=False)
+        print(f"Saved global CO2 data to {output_path}")
+    else:
+        print(f"File {input_path} not found. Skipping CO2 processing.")
 # Run all
 if __name__ == "__main__":
     process_global_temperatures()
     process_country_temperatures()
     process_major_city_temperatures()
     process_state_temperatures()
+    process_co2_data()
