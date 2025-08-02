@@ -61,6 +61,4 @@ def process_co2_data(input_path="raw-dataset/owid-co2-data.csv", output_path="gl
 if __name__ == "__main__":
     process_global_temperatures()
     process_country_temperatures()
-    process_major_city_temperatures()
-    process_state_temperatures()
     process_co2_data()

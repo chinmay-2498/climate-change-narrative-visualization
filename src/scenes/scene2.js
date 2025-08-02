@@ -2,6 +2,48 @@ import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 import { globalTooltip, UnifiedTooltip } from '../d3-components/tooltip.js';
 
 export async function initScene2() {
+  // Function to ensure caption containers are properly initialized
+  function ensureCaptionContainers() {
+    // Reset viz container styling that might have been modified by Scene 3
+    const viz = d3.select('#viz');
+    viz.style('position', null)
+       .style('top', null)
+       .style('left', null)
+       .style('right', null)
+       .style('bottom', null)
+       .style('width', null)
+       .style('height', null)
+       .style('z-index', null);
+
+    // Ensure caption containers exist and have proper styling
+    let leftContainer = d3.select('.caption-left');
+    let rightContainer = d3.select('.caption-right');
+    
+    // If containers don't exist or are not properly styled, reinitialize them
+    if (leftContainer.empty()) {
+      leftContainer = d3.select('.scene-section')
+        .insert('div', '#viz')
+        .attr('class', 'caption-left');
+    }
+    
+    if (rightContainer.empty()) {
+      rightContainer = d3.select('.scene-section')
+        .append('div')
+        .attr('class', 'caption-right');
+    }
+    
+    // Ensure proper styling for caption containers
+    leftContainer
+      .style('display', 'flex')
+      .style('flex-direction', 'column')
+      .style('gap', '20px');
+      
+    rightContainer
+      .style('display', 'flex')
+      .style('flex-direction', 'column')
+      .style('gap', '20px');
+  }
+
   // Colour palette matching the rest of the narrative
   const COLORS = {
     temp: "#e63946",   // red for land temperature
@@ -853,6 +895,9 @@ export async function initScene2() {
     console.log("Clearing captions...");
     d3.select('.caption-left').html('');
     d3.select('.caption-right').html('');
+
+    // Ensure caption containers are properly initialized after clearing
+    ensureCaptionContainers();
     
     // Hide replay button initially
     console.log("Hiding replay button...");
