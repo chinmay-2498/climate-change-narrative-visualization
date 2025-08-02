@@ -352,7 +352,7 @@ export async function initScene3() {
       .style('gap', '30px')
       .style('padding', '30px');
 
-    // Left sidebar for legend - consistent sizing
+    // Left sidebar for legend - consistent sizing with proper spacing
     const leftSidebar = mainContainer.append('div')
       .attr('class', 'legend-sidebar')
       .style('width', '280px') // Match controls width
@@ -360,7 +360,8 @@ export async function initScene3() {
       .style('display', 'flex')
       .style('flex-direction', 'column')
       .style('justify-content', 'center')
-      .style('align-items', 'center');
+      .style('align-items', 'center')
+      .style('padding-left', '15px'); // Add left padding to show border accent
 
     // Central map area - maximized for full-screen martini glass bowl design
     mapWrapper = mainContainer.append('div')
@@ -377,7 +378,7 @@ export async function initScene3() {
       .style('backdrop-filter', 'blur(25px)')
       .style('border', `2px solid ${COLORS.white}`);
 
-    // Enhanced right sidebar for controls with consistent sizing
+    // Enhanced right sidebar for controls with consistent sizing and matching borders
     const rightSidebar = mainContainer.append('div')
       .attr('class', 'controls-sidebar')
       .style('width', '280px') // Match legend width
@@ -386,7 +387,7 @@ export async function initScene3() {
       .style('flex-direction', 'column')
       .style('justify-content', 'center')
       .style('align-items', 'center')
-      .style('padding', '0 15px');
+      .style('padding-right', '15px'); // Add right padding for symmetry
 
     // Enhanced map dimensions - maximize the available space for better visual impact
     const containerWidth = mapWrapper.node().clientWidth || 1400;
@@ -415,15 +416,20 @@ export async function initScene3() {
     // Color scale for temperature deltas
     const allDeltas = [];
     for (const country of availableCountries) {
-      for (const year of years.slice(0, 20)) { // Sample years for range
+      for (const year of years) { // Use all years for better range calculation
         const delta = getTempDelta(country, year);
         if (delta !== null) allDeltas.push(delta);
       }
     }
     
     const deltaExtent = d3.extent(allDeltas);
-    const maxDelta = Math.max(Math.abs(deltaExtent[0] || 0), Math.abs(deltaExtent[1] || 0));
-    const colorDomain = maxDelta > 0 ? [-maxDelta, maxDelta] : [-2, 2];
+    console.log("Temperature delta range:", deltaExtent);
+    
+    // Use asymmetric color domain based on actual data range
+    // From your screenshots: max warming ~+11°C, max cooling ~-3°C
+    const colorDomain = deltaExtent && deltaExtent.length === 2 ? 
+      [Math.min(deltaExtent[0], -3), Math.max(deltaExtent[1], 11)] : 
+      [-3, 11]; // Fallback range
     
     const colorScale = d3.scaleSequential(d3.interpolateRdYlBu)
       .domain([colorDomain[1], colorDomain[0]]); // Reversed for red=hot, blue=cold
@@ -541,6 +547,9 @@ export async function initScene3() {
         });
     }
 
+    // IMPORTANT: Initial render of the map with current year
+    renderCountries(currentYear);
+
     return { svg, renderCountries, colorScale, colorDomain };
   }
 
@@ -640,6 +649,10 @@ export async function initScene3() {
 
   // Create enhanced vertical controls for right sidebar - EXPERT UI/UX DESIGN
   function createControls(container) {
+    // Add auto-play state variables at the top level
+    let isPlaying = false;
+    let playInterval = null;
+
     const controlsContainer = container.append('div')
       .attr('class', 'vertical-controls')
       .style('background', COLORS.white) // Clean white background like project cards
@@ -794,6 +807,18 @@ export async function initScene3() {
       .style('transition', 'all 0.3s ease')
       .style('cursor', 'pointer')
       .on('input', function() {
+        // Stop auto-play if user manually changes slider
+        if (isPlaying) {
+          isPlaying = false;
+          if (playInterval) {
+            clearInterval(playInterval);
+            playInterval = null;
+          }
+          d3.select('.play-pause-btn')
+            .html('▶')
+            .style('background', COLORS.primary);
+        }
+        
         const year = +this.value;
         currentYear = year;
         yearDisplay.text(year);
@@ -823,17 +848,121 @@ export async function initScene3() {
       .style('letter-spacing', '0.5px')
       .text('1900');
 
-    // Compact manual year input section - space-efficient design
-    const inputContainer = controlsContainer.append('div')
+    // Combined controls section - Auto Play and Manual Entry side by side
+    const combinedControlsContainer = controlsContainer.append('div')
+      .style('display', 'flex')
+      .style('gap', '12px')
+      .style('width', '100%')
+      .style('margin-top', '12px')
+      .style('justify-content', 'space-between');
+
+    // Left side: Auto Play controls
+    const playContainer = combinedControlsContainer.append('div')
       .style('display', 'flex')
       .style('flex-direction', 'column')
       .style('align-items', 'center')
-      .style('gap', '6px') // Tighter gaps
-      .style('margin-top', '0') // No extra margin
-      .style('width', '100%');
+      .style('gap', '6px')
+      .style('flex', '1');
+
+    playContainer.append('div')
+      .style('font-size', '10px')
+      .style('font-weight', '600')
+      .style('color', COLORS.text)
+      .style('text-align', 'center')
+      .style('text-transform', 'uppercase')
+      .style('letter-spacing', '0.5px')
+      .text('Auto Play');
+
+    // Create compact play/pause button
+    const playButton = playContainer.append('button')
+      .attr('class', 'play-pause-btn')
+      .style('background', COLORS.primary)
+      .style('color', COLORS.white)
+      .style('border', 'none')
+      .style('width', '36px')
+      .style('height', '36px')
+      .style('border-radius', '50%')
+      .style('cursor', 'pointer')
+      .style('display', 'flex')
+      .style('align-items', 'center')
+      .style('justify-content', 'center')
+      .style('font-size', '14px')
+      .style('box-shadow', '0 3px 10px rgba(230, 57, 70, 0.3)')
+      .style('transition', 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)')
+      .html('▶') // Play symbol
+      .on('click', function() {
+        if (isPlaying) {
+          // Pause
+          isPlaying = false;
+          if (playInterval) {
+            clearInterval(playInterval);
+            playInterval = null;
+          }
+          d3.select(this)
+            .html('▶')
+            .style('background', COLORS.primary);
+        } else {
+          // Play
+          isPlaying = true;
+          d3.select(this)
+            .html('⏸')
+            .style('background', COLORS.secondary);
+          
+          // Start auto-progression
+          playInterval = setInterval(() => {
+            const currentValue = +slider.property('value');
+            const nextYear = currentValue + 1;
+            
+            if (nextYear <= 2015) {
+              currentYear = nextYear;
+              slider.property('value', nextYear);
+              yearDisplay.text(nextYear);
+              if (yearInput) {
+                yearInput.property('value', nextYear);
+              }
+              if (mapInstance) {
+                mapInstance.renderCountries(nextYear);
+              }
+              updateCountryInfo(selectedCountry);
+            } else {
+              // Reached the end, stop playing
+              isPlaying = false;
+              clearInterval(playInterval);
+              playInterval = null;
+              d3.select(this)
+                .html('▶')
+                .style('background', COLORS.primary);
+            }
+          }, 150); // 150ms between years for smooth progression
+        }
+      })
+      .on('mouseover', function() {
+        if (!isPlaying) {
+          d3.select(this)
+            .style('background', COLORS.secondary)
+            .style('transform', 'scale(1.08)')
+            .style('box-shadow', '0 4px 12px rgba(69, 123, 157, 0.4)');
+        }
+      })
+      .on('mouseout', function() {
+        if (!isPlaying) {
+          d3.select(this)
+            .style('background', COLORS.primary)
+            .style('transform', 'scale(1)')
+            .style('box-shadow', '0 3px 10px rgba(230, 57, 70, 0.3)');
+        }
+      });
+
+    // Right side: Manual Entry controls
+    const inputContainer = combinedControlsContainer.append('div')
+      .style('display', 'flex')
+      .style('flex-direction', 'column')
+      .style('align-items', 'center')
+      .style('gap', '6px')
+      .style('flex', '1');
 
     inputContainer.append('label')
-      .style('font-size', '11px') // Smaller font
+      .style('font-size', '10px')
       .style('font-weight', '600')
       .style('color', COLORS.text)
       .style('text-align', 'center')
@@ -843,10 +972,10 @@ export async function initScene3() {
 
     // Compact helpful hint text
     inputContainer.append('div')
-      .style('font-size', '9px') // Very small but readable
+      .style('font-size', '8px')
       .style('color', COLORS.secondary)
       .style('text-align', 'center')
-      .style('margin-bottom', '4px')
+      .style('margin-bottom', '2px')
       .style('opacity', '0.7')
       .style('line-height', '1.2')
       .text('(1900-2015)');
@@ -859,18 +988,30 @@ export async function initScene3() {
       .attr('value', 1900)
       .attr('step', 1)
       .attr('class', 'year-input')
-      .style('width', '80px') // Compact but usable
-      .style('padding', '8px 6px') // Optimized padding
+      .style('width', '70px') // Slightly smaller to fit side-by-side
+      .style('padding', '6px 4px') // More compact padding
       .style('border', `2px solid ${COLORS.secondary}`)
       .style('border-radius', '6px')
       .style('text-align', 'center')
-      .style('font-size', '14px') // Good readability
+      .style('font-size', '13px') // Slightly smaller font
       .style('font-weight', '600')
       .style('color', COLORS.text)
       .style('background', COLORS.white)
       .style('outline', 'none')
       .style('transition', 'all 0.2s ease')
       .on('input', function() {
+        // Stop auto-play if user manually changes input
+        if (isPlaying) {
+          isPlaying = false;
+          if (playInterval) {
+            clearInterval(playInterval);
+            playInterval = null;
+          }
+          d3.select('.play-pause-btn')
+            .html('▶')
+            .style('background', COLORS.primary);
+        }
+        
         const year = +this.value;
         
         // Allow any input while typing, only validate when complete
@@ -975,6 +1116,18 @@ export async function initScene3() {
         .style('min-width', '28px') // Ensure consistent button sizes
         .text(year)
         .on('click', function() {
+          // Stop auto-play if user manually selects a year
+          if (isPlaying) {
+            isPlaying = false;
+            if (playInterval) {
+              clearInterval(playInterval);
+              playInterval = null;
+            }
+            d3.select('.play-pause-btn')
+              .html('▶')
+              .style('background', COLORS.primary);
+          }
+          
           currentYear = year;
           yearDisplay.text(year);
           if (slider) {
