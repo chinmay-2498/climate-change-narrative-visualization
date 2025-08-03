@@ -541,7 +541,6 @@ export async function initScene3() {
             }
             
             renderCountries(currentYear);
-            updateSelectionButton();
           }
         });
     }
@@ -602,7 +601,6 @@ export async function initScene3() {
         selectedCountry = null;
         updateCountryInfo(null);
         mapInstance.renderCountries(currentYear);
-        updateSelectionButton();
       });
 
     return { svg, renderCountries, colorScale, colorDomain };
@@ -1241,10 +1239,6 @@ export async function initScene3() {
           d3.select(this).style('display', 'none');
         });
     }
-  }
-
-  function updateSelectionButton() {
-    // Selection button update logic
   }
 
   let mapInstance;

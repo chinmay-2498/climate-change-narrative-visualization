@@ -33,12 +33,14 @@ export async function initScene1() {
     leftContainer
       .style('display', 'flex')
       .style('flex-direction', 'column')
-      .style('gap', '20px');
+      .style('gap', '24px')
+      .style('justify-content', 'center');
       
     rightContainer
       .style('display', 'flex')
       .style('flex-direction', 'column')
-      .style('gap', '20px');
+      .style('gap', '24px')
+      .style('justify-content', 'center');
   }
 
   function addCaptions() {
@@ -368,7 +370,7 @@ export async function initScene1() {
       const content = `
         <strong>${d.Year}</strong><br>
         Land: ${d.LandAvgTemp.toFixed(2)}°C<br>
-        Ocean: ${d.LandOceanAvgTemp.toFixed(2)}°C
+        Land + Ocean: ${d.LandOceanAvgTemp.toFixed(2)}°C
       `;
       globalTooltip.show(content, event);
       updateVerticalLine(d.Year);

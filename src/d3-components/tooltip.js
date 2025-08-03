@@ -4,15 +4,13 @@ export class UnifiedTooltip {
   constructor(container = 'body') {
     this.container = container;
     this.tooltip = null;
-    this.offset = { x: 12, y: -8 }; // Close to mouse pointer
+    this.offset = { x: 12, y: -8 };
     this.init();
   }
 
   init() {
-    // Remove any existing tooltip
     d3.select(this.container).select('.unified-tooltip').remove();
     
-    // Create the tooltip element
     this.tooltip = d3.select(this.container)
       .append('div')
       .attr('class', 'unified-tooltip')
@@ -65,30 +63,24 @@ export class UnifiedTooltip {
     const mouseX = event.pageX || event.clientX;
     const mouseY = event.pageY || event.clientY;
     
-    // Get tooltip dimensions
     const tooltipNode = this.tooltip.node();
     const rect = tooltipNode.getBoundingClientRect();
     
-    // Calculate position with boundary checking
     let left = mouseX + offsetX;
     let top = mouseY + offsetY;
     
-    // Check right boundary
     if (left + rect.width > window.innerWidth - 10) {
       left = mouseX - rect.width - Math.abs(offsetX);
     }
     
-    // Check bottom boundary
     if (top + rect.height > window.innerHeight - 10) {
       top = mouseY - rect.height - Math.abs(offsetY);
     }
     
-    // Check left boundary
     if (left < 10) {
       left = 10;
     }
     
-    // Check top boundary
     if (top < 10) {
       top = mouseY + Math.abs(offsetY) + 10;
     }
@@ -117,7 +109,6 @@ export class UnifiedTooltip {
     }
   }
 
-  // Static utility methods for common tooltip content formatting
   static formatBasicData(data) {
     return Object.entries(data)
       .map(([key, value]) => `<div><strong>${key}:</strong> ${value}</div>`)
@@ -154,5 +145,4 @@ export class UnifiedTooltip {
   }
 }
 
-// Export a singleton instance for global use
 export const globalTooltip = new UnifiedTooltip();
