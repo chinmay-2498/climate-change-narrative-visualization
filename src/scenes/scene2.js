@@ -33,12 +33,14 @@ export async function initScene2() {
     leftContainer
       .style('display', 'flex')
       .style('flex-direction', 'column')
-      .style('gap', '20px');
+      .style('gap', '24px')
+      .style('justify-content', 'center');
       
     rightContainer
       .style('display', 'flex')
       .style('flex-direction', 'column')
-      .style('gap', '20px');
+      .style('gap', '24px')
+      .style('justify-content', 'center');
   }
 
   // Color scheme matching narrative theme
@@ -273,7 +275,7 @@ export async function initScene2() {
       .attr('x', -(height / 2))
       .attr('y', margin.left - 40)
       .attr('fill', COLORS.temp)
-      .text('Temperature (°C)');
+      .text('Land Temperature (°C)');
     svg.append('text')
       .attr('class', 'axis-label')
       .attr('transform', 'rotate(-90)')

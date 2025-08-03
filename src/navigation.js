@@ -12,18 +12,15 @@ export function initNavigation() {
     const nav = document.createElement('div');
     nav.className = 'scene-navigation';
     
-    // Add progress bar
     const progress = document.createElement('div');
     progress.className = 'progress-bar';
     nav.appendChild(progress);
 
-    // Add previous arrow
     const prevArrow = document.createElement('button');
     prevArrow.className = 'nav-arrow prev';
     prevArrow.innerHTML = '←';
     nav.appendChild(prevArrow);
 
-    // Add navigation buttons
     const buttonContainer = document.createElement('div');
     buttonContainer.className = 'nav-buttons';
     
@@ -44,22 +41,18 @@ export function initNavigation() {
 
     nav.appendChild(buttonContainer);
 
-    // Add next arrow
     const nextArrow = document.createElement('button');
     nextArrow.className = 'nav-arrow next';
     nextArrow.innerHTML = '→';
     nav.appendChild(nextArrow);
 
-    // Add navigation to the document
     const navigationContainer = document.getElementById('navigation');
     if (navigationContainer) {
         navigationContainer.appendChild(nav);
     }
 
-    // Set initial state
     let currentSceneIndex = 0;
 
-    // Handle arrow navigation with wraparound
     prevArrow.addEventListener('click', () => {
         currentSceneIndex = (currentSceneIndex - 1 + scenes.length) % scenes.length;
         const scene = scenes[currentSceneIndex];
@@ -74,13 +67,11 @@ export function initNavigation() {
         scene.init();
     });
 
-    // Update arrow states - always enabled
     function updateArrows() {
         prevArrow.disabled = false;
         nextArrow.disabled = false;
     }
 
-    // Set initial arrow states
     updateArrows();
     updateActiveScene(1);
     updateProgress(1);
