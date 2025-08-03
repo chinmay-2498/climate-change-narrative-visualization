@@ -282,7 +282,7 @@ export async function initScene2() {
       .attr('x', -(height / 2))
       .attr('y', width - margin.right + 50)
       .attr('fill', COLORS.co2)
-      .text('CO₂ Emissions (Mt)');
+      .text('CO₂ Emissions (Megatonne)');
 
     svg.append('text')
       .attr('class', 'main-title')
@@ -426,7 +426,7 @@ export async function initScene2() {
     co2Legend.append('div')
       .attr('class', 'legend-line')
       .style('background', COLORS.co2);
-    co2Legend.append('span').text('CO₂ Emissions');
+    co2Legend.append('span').text('CO₂ Emissions (Megatonne)');
     
     const milestoneLegend = legend.append('div')
       .attr('class', 'legend-item');
@@ -528,7 +528,7 @@ export async function initScene2() {
       .attr('x', width / 2)
       .attr('y', height - 10)
       .attr('fill', COLORS.co2)
-      .text('CO₂ Emissions (Mt)');
+      .text('CO₂ Emissions (Megatonne)');
     svg.append('text')
       .attr('class', 'axis-label')
       .attr('transform', 'rotate(-90)')
