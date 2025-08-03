@@ -69,12 +69,6 @@ body {
   transition: all 0.8s ease;
 }
 
-.legend {
-  opacity: 0;
-  transform: translateY(20px);
-  transition: all 0.5s ease;
-}
-
 .scene-section {
   display: grid;
   grid-template-columns: minmax(150px, 1fr) minmax(auto, 900px) minmax(150px, 1fr);
@@ -250,10 +244,6 @@ body {
 
 .highlight-group {
   pointer-events: all;
-}
-
-#viz {
-  position: relative;
 }
 
 .axis-label {
@@ -474,19 +464,6 @@ body {
   border: none;
 }
 
-.tooltip {
-  position: absolute;
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 8px 12px;
-  border-radius: 4px;
-  font-size: 12px;
-  pointer-events: none;
-  z-index: 1000;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
 .enhanced-tooltip {
   position: absolute;
   background: rgba(26, 32, 56, 0.95);
@@ -597,14 +574,6 @@ body {
 
 .clear-selection-btn:active {
   transform: translateY(0);
-}
-
-.country {
-  transition: all 0.3s ease;
-}
-
-.country:hover {
-  filter: brightness(1.1);
 }
 
 .map-svg {

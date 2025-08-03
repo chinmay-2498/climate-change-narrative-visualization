@@ -111,6 +111,11 @@ export async function initScene2() {
     }
   ];
 
+  // Helper function to clear legend
+  function clearLegend() {
+    d3.select("#viz .legend").remove();
+  }
+
   const leftCaptions = [
     {
       title: 'Rising CO₂ Emissions',
@@ -397,7 +402,7 @@ export async function initScene2() {
 
     svg.style("margin-bottom", "10px");
     
-    d3.select("#viz .legend").remove();
+    clearLegend();
     
     const legend = viz.append('div')
       .attr('class', 'legend')
