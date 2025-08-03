@@ -194,6 +194,7 @@ export async function initScene3() {
     ["Chad", "Chad"],
     ["Niger", "Niger"],
     ["Mali", "Mali"],
+    ["W. Sahara", "Mauritania"],
     ["Mauritania", "Mauritania"],
     ["Morocco", "Morocco"],
     ["Tunisia", "Tunisia"],
@@ -433,9 +434,7 @@ export async function initScene3() {
     const deltaExtent = d3.extent(allDeltas);
     console.log("Temperature delta range:", deltaExtent);
     
-    const colorDomain = deltaExtent && deltaExtent.length === 2 ? 
-      [Math.min(deltaExtent[0], -3), Math.max(deltaExtent[1], 11)] : 
-      [-3, 11];
+    const colorDomain = [-3, 3];
     
     const colorScale = d3.scaleSequential(d3.interpolateRdYlBu)
       .domain([colorDomain[1], colorDomain[0]]);
@@ -1022,7 +1021,7 @@ export async function initScene3() {
       .style('text-align', 'center')
       .style('text-transform', 'uppercase')
       .style('letter-spacing', '0.5px')
-      .text('Manual Entry');
+      .text('Enter Year');
 
     inputContainer.append('div')
       .style('font-size', '8px')
