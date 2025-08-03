@@ -31,6 +31,8 @@ This project presents climate data through an engaging three-scene narrative:
 - CO₂ emissions data from Our World in Data
 - Country geographic data for world map visualization
 
+*Note: Raw data was first transformed into a usable format with the help of Python script `preprocess.py` located in the data directory.*
+
 ## Getting Started
 
 1. Clone the repository
