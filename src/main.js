@@ -18,6 +18,12 @@ function handleResize() {
 }
 
 function preventScrolling(e) {
+    if (e.target === document.body || e.target === document.documentElement) {
+        e.preventDefault();
+    }
+}
+
+function preventWheelScrolling(e) {
     e.preventDefault();
 }
 
@@ -26,9 +32,8 @@ window.onload = () => {
     
     window.addEventListener('resize', handleResize);
     
-    document.addEventListener('touchstart', preventScrolling, { passive: false });
     document.addEventListener('touchmove', preventScrolling, { passive: false });
-    document.addEventListener('wheel', preventScrolling, { passive: false });
+    document.addEventListener('wheel', preventWheelScrolling, { passive: false });
     
     document.addEventListener('keydown', (e) => {
         if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key)) {
